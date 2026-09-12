@@ -1,0 +1,16 @@
+{"timestamp": "2026-09-11T09:44:07.410463+00:00", "event": "run_started", "run_id": "replay_221be162", "capability_id": "lookup_savings_balance", "capability_version": "1.0.0", "inputs": {"member_id": "[REDACTED]"}}
+{"timestamp": "2026-09-11T09:44:07.410992+00:00", "event": "step_started", "step_id": "open_search", "action": "navigate", "intent": "Open the member search page"}
+{"timestamp": "2026-09-11T09:44:07.437315+00:00", "event": "checkpoint_passed", "step_id": "open_search"}
+{"timestamp": "2026-09-11T09:44:07.437550+00:00", "event": "step_started", "step_id": "enter_member_id", "action": "fill", "intent": "Enter the member ID into the search field"}
+{"timestamp": "2026-09-11T09:44:07.464029+00:00", "event": "locator_resolved", "step_id": "enter_member_id", "strategy_kind": "anchor_relative", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-11T09:44:07.464244+00:00", "event": "checkpoint_passed", "step_id": "enter_member_id"}
+{"timestamp": "2026-09-11T09:44:07.464295+00:00", "event": "step_started", "step_id": "submit_search", "action": "click", "intent": "Submit the member search form"}
+{"timestamp": "2026-09-11T09:44:07.514833+00:00", "event": "locator_resolved", "step_id": "submit_search", "strategy_kind": "role_name", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-11T09:44:07.529535+00:00", "event": "checkpoint_passed", "step_id": "submit_search"}
+{"timestamp": "2026-09-11T09:44:07.529723+00:00", "event": "step_started", "step_id": "open_member", "action": "click", "intent": "Open the matching member record"}
+{"timestamp": "2026-09-11T09:44:07.571315+00:00", "event": "locator_resolved", "step_id": "open_member", "strategy_kind": "xpath", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-11T09:44:07.585370+00:00", "event": "checkpoint_passed", "step_id": "open_member"}
+{"timestamp": "2026-09-11T09:44:07.585547+00:00", "event": "step_started", "step_id": "read_balance", "action": "read", "intent": "Read the savings balance from the account table"}
+{"timestamp": "2026-09-11T09:44:07.611343+00:00", "event": "locator_resolved", "step_id": "read_balance", "strategy_kind": "table_cell", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-11T09:44:07.612324+00:00", "event": "checkpoint_passed", "step_id": "read_balance"}
+{"timestamp": "2026-09-11T09:44:07.612440+00:00", "event": "run_succeeded", "step_id": "read_balance"}

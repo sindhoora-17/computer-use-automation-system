@@ -1,0 +1,166 @@
+{
+  "url": "http://127.0.0.1:5000/content/search",
+  "title": "Member Search",
+  "elements": [
+    {
+      "ref": "e1",
+      "tag": "td",
+      "role": "",
+      "accessible_name": "",
+      "text": "Member Search",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "Member Search",
+      "readable": "True"
+    },
+    {
+      "ref": "e2",
+      "tag": "td",
+      "role": "",
+      "accessible_name": "",
+      "text": "Member Number / Last Name",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "Member Number / Last Name",
+      "readable": "True"
+    },
+    {
+      "ref": "e3",
+      "tag": "input",
+      "role": "",
+      "accessible_name": "",
+      "text": "",
+      "current_value": "10001",
+      "input_type": "text",
+      "nearby_text": "Member Number / Last Name",
+      "readable": "False"
+    },
+    {
+      "ref": "e4",
+      "tag": "input",
+      "role": "",
+      "accessible_name": "Search",
+      "text": "",
+      "current_value": "Search",
+      "input_type": "submit",
+      "nearby_text": "Member Number / Last Name",
+      "readable": "False"
+    },
+    {
+      "ref": "e5",
+      "tag": "th",
+      "role": "",
+      "accessible_name": "",
+      "text": "Member #",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "Member #\tLast Name\tFirst Name\tStatus",
+      "readable": "True"
+    },
+    {
+      "ref": "e6",
+      "tag": "th",
+      "role": "",
+      "accessible_name": "",
+      "text": "Last Name",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "Member #\tLast Name\tFirst Name\tStatus",
+      "readable": "True"
+    },
+    {
+      "ref": "e7",
+      "tag": "th",
+      "role": "",
+      "accessible_name": "",
+      "text": "First Name",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "Member #\tLast Name\tFirst Name\tStatus",
+      "readable": "True"
+    },
+    {
+      "ref": "e8",
+      "tag": "th",
+      "role": "",
+      "accessible_name": "",
+      "text": "Status",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "Member #\tLast Name\tFirst Name\tStatus",
+      "readable": "True"
+    },
+    {
+      "ref": "e9",
+      "tag": "td",
+      "role": "",
+      "accessible_name": "",
+      "text": "10001",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "10001\tRamirez\tElena\tActive",
+      "readable": "True"
+    },
+    {
+      "ref": "e10",
+      "tag": "a",
+      "role": "",
+      "accessible_name": "10001",
+      "text": "10001",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "10001\tRamirez\tElena\tActive",
+      "readable": "False"
+    },
+    {
+      "ref": "e11",
+      "tag": "td",
+      "role": "",
+      "accessible_name": "",
+      "text": "Ramirez",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "10001\tRamirez\tElena\tActive",
+      "readable": "True"
+    },
+    {
+      "ref": "e12",
+      "tag": "td",
+      "role": "",
+      "accessible_name": "",
+      "text": "Elena",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "10001\tRamirez\tElena\tActive",
+      "readable": "True"
+    },
+    {
+      "ref": "e13",
+      "tag": "td",
+      "role": "",
+      "accessible_name": "",
+      "text": "Active",
+      "current_value": "",
+      "input_type": "",
+      "nearby_text": "10001\tRamirez\tElena\tActive",
+      "readable": "True"
+    }
+  ],
+  "visible_text": "Member Search\nMember Number / Last Name\t\t\n\n\nMember #\tLast Name\tFirst Name\tStatus\n10001\tRamirez\tElena\tActive",
+  "recent_actions": [
+    {
+      "action": "fill",
+      "ref": "e3",
+      "value": "10001",
+      "reason": "Enter the requested member number in the search field.",
+      "result": null
+    },
+    {
+      "action": "click",
+      "ref": "e4",
+      "value": null,
+      "reason": "Submit the already-filled member number search.",
+      "result": null
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "action": "fill",
+    "ref": "e1",
+    "value": "10001",
+    "reason": "Enter the requested member number in the search field.",
+    "observed_url": "http://127.0.0.1:5000/content/search"
+  },
+  {
+    "action": "click",
+    "ref": "e2",
+    "value": null,
+    "reason": "Submit the already-filled member number search.",
+    "observed_url": "http://127.0.0.1:5000/content/search"
+  },
+  {
+    "action": "click",
+    "ref": "e3",
+    "value": null,
+    "reason": "Open the matching member record for member 10001.",
+    "observed_url": "http://127.0.0.1:5000/content/search"
+  },
+  {
+    "action": "complete",
+    "ref": null,
+    "value": null,
+    "reason": "Member 10001's current savings balance is $1842.17.",
+    "observed_url": "http://127.0.0.1:5000/content/member/10001"
+  }
+]

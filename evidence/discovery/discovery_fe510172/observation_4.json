@@ -1,0 +1,26 @@
+{
+  "url": "http://127.0.0.1:5000/content/member/10001",
+  "title": "Member Detail",
+  "elements": [],
+  "visible_text": "Member Detail\nMember Number\t10001\tName\tElena Ramirez\n\n\nAccount Number\tType\tStatus\tCurrent Balance\n\u2022\u2022\u2022\u20224217\tSavings\tActive\t$1842.17\n\u2022\u2022\u2022\u20228244\tChecking\tActive\t$522.40",
+  "recent_actions": [
+    {
+      "action": "fill",
+      "ref": "e1",
+      "value": "10001",
+      "reason": "Enter the requested member number in the search field."
+    },
+    {
+      "action": "click",
+      "ref": "e2",
+      "value": null,
+      "reason": "Submit the already-filled member number search."
+    },
+    {
+      "action": "click",
+      "ref": "e3",
+      "value": null,
+      "reason": "Open the matching member record for member 10001."
+    }
+  ]
+}

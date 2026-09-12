@@ -1,0 +1,12 @@
+{"timestamp": "2026-09-12T15:35:21.562432+00:00", "event": "run_started", "run_id": "replay_9bdc21c7", "capability_id": "lookup_savings_balance", "capability_version": "1.0.0", "inputs": {"member_id": "[REDACTED]"}}
+{"timestamp": "2026-09-12T15:35:21.562636+00:00", "event": "step_started", "step_id": "open_search", "action": "navigate", "intent": "Open the member search page"}
+{"timestamp": "2026-09-12T15:35:21.562726+00:00", "event": "policy_authorized", "step_id": "open_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T15:35:21.586141+00:00", "event": "checkpoint_passed", "step_id": "open_search"}
+{"timestamp": "2026-09-12T15:35:21.586317+00:00", "event": "step_started", "step_id": "enter_member_id", "action": "fill", "intent": "Enter the member ID into the search field"}
+{"timestamp": "2026-09-12T15:35:21.602367+00:00", "event": "policy_authorized", "step_id": "enter_member_id", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T15:35:21.621690+00:00", "event": "locator_resolved", "step_id": "enter_member_id", "strategy_kind": "anchor_relative", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-12T15:35:21.622018+00:00", "event": "checkpoint_passed", "step_id": "enter_member_id"}
+{"timestamp": "2026-09-12T15:35:21.622273+00:00", "event": "step_started", "step_id": "submit_search", "action": "click", "intent": "Submit the member search form"}
+{"timestamp": "2026-09-12T15:35:21.632628+00:00", "event": "policy_authorized", "step_id": "submit_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T15:35:21.677720+00:00", "event": "locator_resolved", "step_id": "submit_search", "strategy_kind": "role_name", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-12T15:35:21.688319+00:00", "event": "business_outcome", "step_id": "submit_search", "outcome_code": "MEMBER_NOT_FOUND"}

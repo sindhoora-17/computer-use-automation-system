@@ -1,0 +1,141 @@
+[
+  {
+    "action": "fill",
+    "ref": "e3",
+    "value": "10001",
+    "reason": "Enter member number 10001 in the search field.",
+    "observed_url": "http://127.0.0.1:5000/content/search",
+    "result": null,
+    "target": {
+      "strategies": [
+        {
+          "kind": "anchor_relative",
+          "rank": 1,
+          "role": null,
+          "name": null,
+          "value": null,
+          "anchor_text": "Member Number / Last Name",
+          "relationship": "following_input",
+          "row_anchor": null,
+          "column_header": null,
+          "x": null,
+          "y": null
+        },
+        {
+          "kind": "xpath",
+          "rank": 2,
+          "role": null,
+          "name": null,
+          "value": "//input[@name='member_query']",
+          "anchor_text": null,
+          "relationship": null,
+          "row_anchor": null,
+          "column_header": null,
+          "x": null,
+          "y": null
+        }
+      ],
+      "degradation_policy": "warn_above_rank_3"
+    }
+  },
+  {
+    "action": "click",
+    "ref": "e4",
+    "value": null,
+    "reason": "Submit the already-filled member number search.",
+    "observed_url": "http://127.0.0.1:5000/content/search",
+    "result": null,
+    "target": {
+      "strategies": [
+        {
+          "kind": "role_name",
+          "rank": 1,
+          "role": "button",
+          "name": "Search",
+          "value": null,
+          "anchor_text": null,
+          "relationship": null,
+          "row_anchor": null,
+          "column_header": null,
+          "x": null,
+          "y": null
+        },
+        {
+          "kind": "xpath",
+          "rank": 2,
+          "role": null,
+          "name": null,
+          "value": "//input[@type='submit' and @value='Search']",
+          "anchor_text": null,
+          "relationship": null,
+          "row_anchor": null,
+          "column_header": null,
+          "x": null,
+          "y": null
+        }
+      ],
+      "degradation_policy": "warn_above_rank_3"
+    }
+  },
+  {
+    "action": "click",
+    "ref": "e10",
+    "value": null,
+    "reason": "Open the member 10001 record to locate the current savings balance.",
+    "observed_url": "http://127.0.0.1:5000/content/search",
+    "result": null,
+    "target": {
+      "strategies": [
+        {
+          "kind": "xpath",
+          "rank": 1,
+          "role": null,
+          "name": null,
+          "value": "//a[contains(@href, '/content/member/')]",
+          "anchor_text": null,
+          "relationship": null,
+          "row_anchor": null,
+          "column_header": null,
+          "x": null,
+          "y": null
+        }
+      ],
+      "degradation_policy": "warn_above_rank_3"
+    }
+  },
+  {
+    "action": "read",
+    "ref": "e13",
+    "value": null,
+    "reason": "Read the current balance for the Savings account.",
+    "observed_url": "http://127.0.0.1:5000/content/member/10001",
+    "result": "$1842.17",
+    "target": {
+      "strategies": [
+        {
+          "kind": "table_cell",
+          "rank": 1,
+          "role": null,
+          "name": null,
+          "value": null,
+          "anchor_text": null,
+          "relationship": null,
+          "row_anchor": "Savings",
+          "column_header": "Current Balance",
+          "x": null,
+          "y": null
+        }
+      ],
+      "degradation_policy": "warn_above_rank_3"
+    }
+  },
+  {
+    "action": "complete",
+    "ref": null,
+    "value": null,
+    "reason": "The current savings balance for member 10001 is $1842.17.",
+    "observed_url": "http://127.0.0.1:5000/content/member/10001",
+    "result": null,
+    "target": null
+  }
+]
