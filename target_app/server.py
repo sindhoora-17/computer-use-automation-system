@@ -188,9 +188,7 @@ def member_search():
         "search.html",
         query=query,
         results=results,
-        show_interstitial=(
-            SCENARIO.interstitial
-        ),
+        show_interstitial=False,
     )
 
 
@@ -200,10 +198,6 @@ def member_search():
 def member_detail(
     member_id: str,
 ):
-    # Deliberately simulate expiration
-    # at an interesting point in the flow:
-    # after search succeeds but while opening
-    # the selected member record.
     if SCENARIO.session_expired:
         SCENARIO.session_expired = False
 
@@ -228,6 +222,12 @@ def member_detail(
                     f"{member_id}"
                 ),
             )
+        )
+
+    if SCENARIO.interstitial:
+        return render_template(
+            "manual_review.html",
+            member_id=member_id,
         )
 
     if SCENARIO.app_error:
@@ -261,6 +261,34 @@ def member_detail(
     return render_template(
         "member.html",
         member=member,
+    )
+
+
+@app.post(
+    "/content/member/"
+    "<member_id>/continue"
+)
+def continue_member(
+    member_id: str,
+):
+    if not is_authenticated():
+        return redirect(
+            url_for(
+                "login",
+                next=(
+                    f"/content/member/"
+                    f"{member_id}"
+                ),
+            )
+        )
+
+    SCENARIO.interstitial = False
+
+    return redirect(
+        url_for(
+            "member_detail",
+            member_id=member_id,
+        )
     )
 
 

@@ -1,0 +1,24 @@
+{"timestamp": "2026-09-12T16:34:05.745243+00:00", "event": "run_started", "run_id": "replay_1f046245", "capability_id": "lookup_savings_balance", "capability_version": "1.0.0", "inputs": {"member_id": "[REDACTED]"}}
+{"timestamp": "2026-09-12T16:34:05.745455+00:00", "event": "step_started", "step_id": "open_search", "action": "navigate", "intent": "Open the member search page"}
+{"timestamp": "2026-09-12T16:34:05.745572+00:00", "event": "policy_authorized", "step_id": "open_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T16:34:05.910390+00:00", "event": "checkpoint_passed", "step_id": "open_search"}
+{"timestamp": "2026-09-12T16:34:05.910668+00:00", "event": "step_started", "step_id": "enter_member_id", "action": "fill", "intent": "Enter the member ID into the search field"}
+{"timestamp": "2026-09-12T16:34:05.937226+00:00", "event": "policy_authorized", "step_id": "enter_member_id", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T16:34:05.955972+00:00", "event": "locator_resolved", "step_id": "enter_member_id", "strategy_kind": "anchor_relative", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-12T16:34:05.956165+00:00", "event": "checkpoint_passed", "step_id": "enter_member_id"}
+{"timestamp": "2026-09-12T16:34:05.956216+00:00", "event": "step_started", "step_id": "submit_search", "action": "click", "intent": "Submit the member search form"}
+{"timestamp": "2026-09-12T16:34:05.971795+00:00", "event": "policy_authorized", "step_id": "submit_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T16:34:06.058642+00:00", "event": "locator_resolved", "step_id": "submit_search", "strategy_kind": "role_name", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-12T16:34:06.072624+00:00", "event": "checkpoint_passed", "step_id": "submit_search"}
+{"timestamp": "2026-09-12T16:34:06.072768+00:00", "event": "step_started", "step_id": "open_member", "action": "click", "intent": "Open the matching member record"}
+{"timestamp": "2026-09-12T16:34:06.095829+00:00", "event": "policy_authorized", "step_id": "open_member", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T16:34:06.173170+00:00", "event": "locator_resolved", "step_id": "open_member", "strategy_kind": "xpath", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-12T16:34:06.191861+00:00", "event": "handoff_requested", "step_id": "open_member", "reason": "Checkpoint failed and artifact requires human escalation."}
+{"timestamp": "2026-09-12T16:34:20.212264+00:00", "event": "handoff_resumed", "step_id": "open_member", "request_id": "handoff_cf768086"}
+{"timestamp": "2026-09-12T16:34:20.259901+00:00", "event": "handoff_checkpoint_passed", "step_id": "open_member", "request_id": "handoff_cf768086"}
+{"timestamp": "2026-09-12T16:34:20.260711+00:00", "event": "checkpoint_passed", "step_id": "open_member"}
+{"timestamp": "2026-09-12T16:34:20.261512+00:00", "event": "step_started", "step_id": "read_balance", "action": "read", "intent": "Read the savings balance from the account table"}
+{"timestamp": "2026-09-12T16:34:20.309843+00:00", "event": "policy_authorized", "step_id": "read_balance", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T16:34:20.324011+00:00", "event": "locator_resolved", "step_id": "read_balance", "strategy_kind": "table_cell", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-12T16:34:20.326073+00:00", "event": "checkpoint_passed", "step_id": "read_balance"}
+{"timestamp": "2026-09-12T16:34:20.326279+00:00", "event": "run_succeeded", "step_id": "read_balance"}

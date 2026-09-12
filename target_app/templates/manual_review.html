@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>
+    Meridian Core Admin - Manual Review
+  </title>
+</head>
+
+<body>
+
+<table
+  border="1"
+  cellpadding="8"
+  cellspacing="0"
+  width="600"
+>
+  <tr>
+    <td>
+      <b>
+        Manual Review Required
+      </b>
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      A legacy application notice interrupted
+      the normal member workflow.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      An operator must acknowledge this notice
+      before the member record can be displayed.
+    </td>
+  </tr>
+
+  <tr>
+    <td>
+      <form
+        method="post"
+        action="/content/member/{{ member_id }}/continue"
+      >
+        <button type="submit">
+          Continue to Member
+        </button>
+      </form>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

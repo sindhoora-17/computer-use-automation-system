@@ -7,15 +7,16 @@ name = "computer-use-automation-system"
 version = "0.1.0"
 description = "LLM-discovered, deterministic computer-use automation capabilities"
 requires-python = ">=3.11"
-
 dependencies = [
     "flask",
     "playwright",
     "pydantic",
     "typer",
+    "pyyaml",
     "openai",
     "python-dotenv",
-    "pyyaml",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.optional-dependencies]

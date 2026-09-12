@@ -12,6 +12,11 @@ from cua.artifact.schema import (
     Step,
     ValueSource,
 )
+from cua.escalation.session import (
+    HandoffError,
+    HandoffSession,
+    HandoffTimeout,
+)
 from cua.observability.capture import EvidenceCapture
 from cua.observability.log import RunLogger
 from cua.policy.engine import (
@@ -35,16 +40,22 @@ class ReplayEngine:
     def __init__(
         self,
         surface: PlaywrightSurface,
+        handoff_session: HandoffSession | None = None,
     ) -> None:
         self.surface = surface
 
         self.outcome_detector = OutcomeDetector()
+
         self.recovery_engine = RecoveryEngine(
             surface
         )
 
         self.policy = PolicyEngine(
             surface
+        )
+
+        self.handoff_session = (
+            handoff_session
         )
 
         self.logger: RunLogger | None = None
@@ -67,7 +78,6 @@ class ReplayEngine:
             self.logger.run_dir
         )
 
-        # Recovery attempt counts belong to one run.
         self.recovery_engine = RecoveryEngine(
             self.surface
         )
@@ -152,8 +162,6 @@ class ReplayEngine:
                 intent=step.intent,
             )
 
-            # Resolve values before policy evaluation so
-            # navigation destinations can be checked.
             try:
                 resolved_value = None
 
@@ -205,7 +213,6 @@ class ReplayEngine:
                     step_id=step.id,
                 )
 
-            # Execute the deterministic artifact step.
             try:
                 output = (
                     await self._execute_step(
@@ -227,8 +234,6 @@ class ReplayEngine:
                     step_id=step.id,
                 )
 
-            # Recoverable runtime conditions are checked
-            # before business outcomes and checkpoints.
             recovery_rule = (
                 await self.recovery_engine.detect(
                     artifact.recoveries,
@@ -302,8 +307,7 @@ class ReplayEngine:
                     == "reverify_current_checkpoint"
                 ):
                     checkpoint_ok = (
-                        await self
-                        ._verify_checkpoint(
+                        await self._verify_checkpoint(
                             step.checkpoint,
                             inputs,
                             frame=step.frame,
@@ -338,9 +342,6 @@ class ReplayEngine:
                         step_id=step.id,
                     )
 
-                    # Recovery placed the session into the
-                    # state this step was supposed to reach.
-                    # Continue with the next artifact step.
                     continue
 
                 if (
@@ -376,8 +377,6 @@ class ReplayEngine:
                     step_id=step.id,
                 )
 
-            # Expected business outcomes are legitimate
-            # caller-visible results, not crashes.
             outcome = (
                 await self.outcome_detector
                 .detect_expected_outcome(
@@ -433,6 +432,21 @@ class ReplayEngine:
             )
 
             if not checkpoint_ok:
+                (
+                    handoff_handled,
+                    handoff_failure,
+                ) = await self._attempt_handoff(
+                    artifact=artifact,
+                    step=step,
+                    inputs=inputs,
+                )
+
+                if handoff_handled:
+                    if handoff_failure is not None:
+                        return handoff_failure
+
+                    continue
+
                 return await self._failure(
                     artifact,
                     code="CHECKPOINT_FAILED",
@@ -487,6 +501,196 @@ class ReplayEngine:
             ),
         )
 
+    async def _attempt_handoff(
+        self,
+        artifact: CapabilityArtifact,
+        step: Step,
+        inputs: dict[str, Any],
+    ) -> tuple[
+        bool,
+        RunResult | None,
+    ]:
+        if (
+            step.on_failure
+            != "escalate"
+        ):
+            return False, None
+
+        if self.handoff_session is None:
+            return (
+                True,
+                await self._failure(
+                    artifact,
+                    code=(
+                        "HANDOFF_UNAVAILABLE"
+                    ),
+                    message=(
+                        "Step requested human "
+                        "handoff but no handoff "
+                        "session was configured."
+                    ),
+                    step_id=step.id,
+                ),
+            )
+
+        if self.logger is not None:
+            self.logger.log(
+                "handoff_requested",
+                step_id=step.id,
+                reason=(
+                    "Checkpoint failed and "
+                    "artifact requires human "
+                    "escalation."
+                ),
+            )
+
+        try:
+            request = (
+                await self.handoff_session
+                .escalate(
+                    capability_id=(
+                        artifact.capability.id
+                    ),
+                    capability_version=(
+                        artifact
+                        .capability
+                        .version
+                    ),
+                    step_id=step.id,
+                    reason=(
+                        "Automation could not "
+                        "verify the expected "
+                        "post-step state."
+                    ),
+                    checkpoint_description=(
+                        self
+                        ._checkpoint_description(
+                            step.checkpoint
+                        )
+                    ),
+                    timeout_s=300,
+                )
+            )
+
+        except (
+            HandoffTimeout,
+            HandoffError,
+        ) as exc:
+            if self.logger is not None:
+                self.logger.log(
+                    "handoff_failed",
+                    step_id=step.id,
+                    reason=str(exc),
+                )
+
+            return (
+                True,
+                await self._failure(
+                    artifact,
+                    code="HANDOFF_FAILED",
+                    message=str(exc),
+                    step_id=step.id,
+                ),
+            )
+
+        if self.logger is not None:
+            self.logger.log(
+                "handoff_resumed",
+                step_id=step.id,
+                request_id=(
+                    request.request_id
+                ),
+            )
+
+        checkpoint_ok = (
+            await self._verify_checkpoint(
+                step.checkpoint,
+                inputs,
+                frame=step.frame,
+            )
+        )
+
+        if not checkpoint_ok:
+            if self.logger is not None:
+                self.logger.log(
+                    "handoff_checkpoint_failed",
+                    step_id=step.id,
+                    request_id=(
+                        request.request_id
+                    ),
+                )
+
+            return (
+                True,
+                await self._failure(
+                    artifact,
+                    code=(
+                        "HANDOFF_CHECKPOINT_FAILED"
+                    ),
+                    message=(
+                        "Human handoff resumed, "
+                        "but the expected checkpoint "
+                        "is still not satisfied."
+                    ),
+                    step_id=step.id,
+                ),
+            )
+
+        if self.logger is not None:
+            self.logger.log(
+                "handoff_checkpoint_passed",
+                step_id=step.id,
+                request_id=(
+                    request.request_id
+                ),
+            )
+
+            self.logger.log(
+                "checkpoint_passed",
+                step_id=step.id,
+            )
+
+        return True, None
+
+    def _checkpoint_description(
+        self,
+        checkpoint: Checkpoint | None,
+    ) -> str | None:
+        if checkpoint is None:
+            return None
+
+        if checkpoint.kind == "text_visible":
+            return (
+                "Expected visible text: "
+                f"{checkpoint.value}"
+            )
+
+        if checkpoint.kind == "url_matches":
+            return (
+                "Expected URL pattern: "
+                f"{checkpoint.pattern}"
+            )
+
+        if (
+            checkpoint.kind
+            == "table_contains_row"
+        ):
+            return (
+                "Expected table row containing: "
+                f"{checkpoint.value}"
+            )
+
+        if (
+            checkpoint.kind
+            == "field_value_matches_input"
+        ):
+            return (
+                "Expected field value to match "
+                f"input '{checkpoint.key}'."
+            )
+
+        return checkpoint.kind
+
     async def _retry_step(
         self,
         artifact: CapabilityArtifact,
@@ -501,10 +705,12 @@ class ReplayEngine:
             )
 
         try:
-            output = await self._execute_step(
-                step,
-                inputs,
-                resolved_value,
+            output = (
+                await self._execute_step(
+                    step,
+                    inputs,
+                    resolved_value,
+                )
             )
 
             self._log_locator_resolution(
@@ -541,7 +747,8 @@ class ReplayEngine:
 
             return RunResult(
                 status=(
-                    RunStatus.BUSINESS_OUTCOME
+                    RunStatus
+                    .BUSINESS_OUTCOME
                 ),
                 capability_id=(
                     artifact.capability.id
@@ -549,7 +756,9 @@ class ReplayEngine:
                 capability_version=(
                     artifact.capability.version
                 ),
-                outcome_code=outcome.code,
+                outcome_code=(
+                    outcome.code
+                ),
                 outputs=(
                     self._resolve_return_values(
                         outcome.returns,
@@ -752,9 +961,11 @@ class ReplayEngine:
             if checkpoint.value is None:
                 return False
 
-            return await self.surface.text_visible(
-                checkpoint.value,
-                frame=frame,
+            return (
+                await self.surface.text_visible(
+                    checkpoint.value,
+                    frame=frame,
+                )
             )
 
         if (
@@ -796,9 +1007,11 @@ class ReplayEngine:
             if checkpoint.value is None:
                 return False
 
-            return await self.surface.text_visible(
-                checkpoint.value,
-                frame=frame,
+            return (
+                await self.surface.text_visible(
+                    checkpoint.value,
+                    frame=frame,
+                )
             )
 
         if (

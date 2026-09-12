@@ -1,9 +1,0 @@
-{"timestamp": "2026-09-11T09:37:26.738319+00:00", "event": "run_started", "run_id": "replay_2919f2d0", "capability_id": "lookup_savings_balance", "capability_version": "1.0.0", "inputs": {"member_id": "[REDACTED]"}}
-{"timestamp": "2026-09-11T09:37:26.738629+00:00", "event": "step_started", "step_id": "open_search", "action": "navigate", "intent": "Open the member search page"}
-{"timestamp": "2026-09-11T09:37:26.763447+00:00", "event": "checkpoint_passed", "step_id": "open_search"}
-{"timestamp": "2026-09-11T09:37:26.763647+00:00", "event": "step_started", "step_id": "enter_member_id", "action": "fill", "intent": "Enter the member ID into the search field"}
-{"timestamp": "2026-09-11T09:37:26.785178+00:00", "event": "locator_resolved", "step_id": "enter_member_id", "strategy_kind": "anchor_relative", "strategy_rank": 1, "degraded": false}
-{"timestamp": "2026-09-11T09:37:26.785391+00:00", "event": "checkpoint_passed", "step_id": "enter_member_id"}
-{"timestamp": "2026-09-11T09:37:26.785468+00:00", "event": "step_started", "step_id": "submit_search", "action": "click", "intent": "Submit the member search form"}
-{"timestamp": "2026-09-11T09:37:26.833801+00:00", "event": "locator_resolved", "step_id": "submit_search", "strategy_kind": "role_name", "strategy_rank": 1, "degraded": false}
-{"timestamp": "2026-09-11T09:37:26.845375+00:00", "event": "business_outcome", "step_id": "submit_search", "outcome_code": "MEMBER_NOT_FOUND"}
