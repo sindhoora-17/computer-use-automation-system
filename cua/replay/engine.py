@@ -32,6 +32,7 @@ from cua.replay.recovery import (
 )
 from cua.surface.base import Surface
 from cua.types import (
+    OutcomeClass,
     RunError,
     RunResult,
     RunStatus,
@@ -456,40 +457,73 @@ class ReplayEngine:
             )
 
             if outcome is not None:
-                self.logger.log(
-                    "business_outcome",
-                    step_id=step.id,
-                    outcome_code=(
-                        outcome.code
-                    ),
-                )
+                if (
+                    outcome.classification
+                    == OutcomeClass.BUSINESS_OUTCOME
+                ):
+                    self.logger.log(
+                        "business_outcome",
+                        step_id=step.id,
+                        outcome_code=(
+                            outcome.code
+                        ),
+                    )
 
-                return RunResult(
-                    status=(
-                        RunStatus
-                        .BUSINESS_OUTCOME
-                    ),
-                    capability_id=(
-                        artifact
-                        .capability
-                        .id
-                    ),
-                    capability_version=(
-                        artifact
-                        .capability
-                        .version
-                    ),
-                    outcome_code=(
-                        outcome.code
-                    ),
-                    outputs=(
-                        self
-                        ._resolve_return_values(
-                            outcome.returns,
-                            inputs,
-                        )
-                    ),
-                )
+                    return RunResult(
+                        status=(
+                            RunStatus
+                            .BUSINESS_OUTCOME
+                        ),
+                        capability_id=(
+                            artifact
+                            .capability
+                            .id
+                        ),
+                        capability_version=(
+                            artifact
+                            .capability
+                            .version
+                        ),
+                        outcome_code=(
+                            outcome.code
+                        ),
+                        outputs=(
+                            self
+                            ._resolve_return_values(
+                                outcome.returns,
+                                inputs,
+                            )
+                        ),
+                    )
+
+                if (
+                    outcome.classification
+                    == OutcomeClass.HARD_FAILURE
+                ):
+                    return await self._failure(
+                        artifact,
+                        code=outcome.code,
+                        message=(
+                            "A declared hard-failure "
+                            "outcome was detected."
+                        ),
+                        step_id=step.id,
+                    )
+
+                if (
+                    outcome.classification
+                    == OutcomeClass.RECOVERABLE
+                ):
+                    return await self._failure(
+                        artifact,
+                        code=outcome.code,
+                        message=(
+                            "A recoverable outcome was "
+                            "detected, but no recovery rule "
+                            "handled it."
+                        ),
+                        step_id=step.id,
+                    )
 
             if await self.surface.text_visible(
                 "Application error"
@@ -818,36 +852,69 @@ class ReplayEngine:
         )
 
         if outcome is not None:
-            if self.logger is not None:
-                self.logger.log(
-                    "business_outcome",
-                    step_id=step.id,
+            if (
+                outcome.classification
+                == OutcomeClass.BUSINESS_OUTCOME
+            ):
+                if self.logger is not None:
+                    self.logger.log(
+                        "business_outcome",
+                        step_id=step.id,
+                        outcome_code=(
+                            outcome.code
+                        ),
+                    )
+
+                return RunResult(
+                    status=(
+                        RunStatus
+                        .BUSINESS_OUTCOME
+                    ),
+                    capability_id=(
+                        artifact.capability.id
+                    ),
+                    capability_version=(
+                        artifact.capability.version
+                    ),
                     outcome_code=(
                         outcome.code
                     ),
+                    outputs=(
+                        self._resolve_return_values(
+                            outcome.returns,
+                            inputs,
+                        )
+                    ),
                 )
 
-            return RunResult(
-                status=(
-                    RunStatus
-                    .BUSINESS_OUTCOME
-                ),
-                capability_id=(
-                    artifact.capability.id
-                ),
-                capability_version=(
-                    artifact.capability.version
-                ),
-                outcome_code=(
-                    outcome.code
-                ),
-                outputs=(
-                    self._resolve_return_values(
-                        outcome.returns,
-                        inputs,
-                    )
-                ),
-            )
+            if (
+                outcome.classification
+                == OutcomeClass.HARD_FAILURE
+            ):
+                return await self._failure(
+                    artifact,
+                    code=outcome.code,
+                    message=(
+                        "A declared hard-failure "
+                        "outcome was detected."
+                    ),
+                    step_id=step.id,
+                )
+
+            if (
+                outcome.classification
+                == OutcomeClass.RECOVERABLE
+            ):
+                return await self._failure(
+                    artifact,
+                    code=outcome.code,
+                    message=(
+                        "A recoverable outcome was "
+                        "detected, but no recovery rule "
+                        "handled it."
+                    ),
+                    step_id=step.id,
+                )
 
         checkpoint_ok = (
             await self._verify_checkpoint(

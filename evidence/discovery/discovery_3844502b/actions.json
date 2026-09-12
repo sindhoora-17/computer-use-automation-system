@@ -126,7 +126,7 @@
     "action": "read",
     "ref": "e13",
     "value": null,
-    "reason": "Read the Savings account's current balance.",
+    "reason": "Read the current balance for the Savings account.",
     "observed_url": "http://127.0.0.1:5000/content/member/[REDACTED]",
     "result": "[REDACTED]",
     "target": {
@@ -167,7 +167,7 @@
     "action": "complete",
     "ref": null,
     "value": "[REDACTED]",
-    "reason": "The current savings balance was read from the Savings account row.",
+    "reason": "The savings balance was read from e13 as [REDACTED].",
     "observed_url": "http://127.0.0.1:5000/content/member/[REDACTED]",
     "result": null,
     "target": null

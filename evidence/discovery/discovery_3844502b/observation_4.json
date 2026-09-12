@@ -65,7 +65,7 @@
       "text": "Account Number",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
+      "nearby_text": "Account Number\tType\t[REDACTED]\tCurrent Balance",
       "readable": "true"
     },
     {
@@ -76,7 +76,7 @@
       "text": "Type",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
+      "nearby_text": "Account Number\tType\t[REDACTED]\tCurrent Balance",
       "readable": "true"
     },
     {
@@ -84,10 +84,10 @@
       "tag_name": "th",
       "role": "",
       "accessible_name": "",
-      "text": "Status",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
+      "nearby_text": "Account Number\tType\t[REDACTED]\tCurrent Balance",
       "readable": "true"
     },
     {
@@ -98,7 +98,7 @@
       "text": "Current Balance",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
+      "nearby_text": "Account Number\tType\t[REDACTED]\tCurrent Balance",
       "readable": "true"
     },
     {
@@ -109,7 +109,7 @@
       "text": "\u2022\u2022\u2022\u20224217",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     },
     {
@@ -120,7 +120,7 @@
       "text": "Savings",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     },
     {
@@ -128,10 +128,10 @@
       "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "Active",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     },
     {
@@ -142,7 +142,7 @@
       "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     },
     {
@@ -153,7 +153,7 @@
       "text": "\u2022\u2022\u2022\u20228244",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     },
     {
@@ -164,7 +164,7 @@
       "text": "Checking",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     },
     {
@@ -172,10 +172,10 @@
       "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "Active",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     },
     {
@@ -186,11 +186,11 @@
       "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\t[REDACTED]\t[REDACTED]",
       "readable": "true"
     }
   ],
-  "visible_text": "Member Detail\nMember Number\t[REDACTED]\tName\t[REDACTED]\n\n\nAccount Number\tType\tStatus\tCurrent Balance\n\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]\n\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+  "visible_text": "Member Detail\nMember Number\t[REDACTED]\tName\t[REDACTED]\n\n\nAccount Number\tType\t[REDACTED]\tCurrent Balance\n\u2022\u2022\u2022\u20224217\tSavings\t[REDACTED]\t[REDACTED]\n\u2022\u2022\u2022\u20228244\tChecking\t[REDACTED]\t[REDACTED]",
   "recent_actions": [
     {
       "action": "fill",
@@ -209,12 +209,6 @@
       "ref": "e10",
       "value": null,
       "result": null
-    },
-    {
-      "action": "read",
-      "ref": "e13",
-      "value": null,
-      "result": "[REDACTED]"
     }
   ]
 }

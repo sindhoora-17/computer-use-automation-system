@@ -111,3 +111,67 @@ def test_redacts_structured_name_everywhere():
         "[REDACTED]"
         in str(result)
     )
+
+def test_redacts_names_from_table_columns():
+    redactor = Redactor()
+
+    payload = {
+        "elements": [
+            {
+                "text": "Last Name",
+                "nearby_text": (
+                    "Member Number\t"
+                    "Last Name\t"
+                    "First Name\t"
+                    "Status"
+                ),
+            },
+            {
+                "text": "Ramirez",
+                "nearby_text": (
+                    "10001\t"
+                    "Ramirez\t"
+                    "Elena\t"
+                    "Active"
+                ),
+            },
+            {
+                "text": "Elena",
+                "nearby_text": (
+                    "10001\t"
+                    "Ramirez\t"
+                    "Elena\t"
+                    "Active"
+                ),
+            },
+            {
+                "text": "Active",
+            },
+        ]
+    }
+
+    result = (
+        redactor.redact_discovery_payload(
+            payload
+        )
+    )
+
+    serialized = str(result)
+
+    assert "Ramirez" not in serialized
+    assert "Elena" not in serialized
+
+    assert (
+        result["elements"][1]["text"]
+        == "[REDACTED]"
+    )
+
+    assert (
+        result["elements"][2]["text"]
+        == "[REDACTED]"
+    )
+
+    assert (
+        result["elements"][3]["text"]
+        == "Active"
+    )

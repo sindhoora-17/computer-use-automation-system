@@ -98,7 +98,7 @@
       "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "[REDACTED]\tRamirez\tElena\tActive",
+      "nearby_text": "[REDACTED]\t[REDACTED]\t[REDACTED]\tActive",
       "readable": "true"
     },
     {
@@ -109,7 +109,7 @@
       "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "[REDACTED]\tRamirez\tElena\tActive",
+      "nearby_text": "[REDACTED]\t[REDACTED]\t[REDACTED]\tActive",
       "readable": "false"
     },
     {
@@ -117,10 +117,10 @@
       "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "Ramirez",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "[REDACTED]\tRamirez\tElena\tActive",
+      "nearby_text": "[REDACTED]\t[REDACTED]\t[REDACTED]\tActive",
       "readable": "true"
     },
     {
@@ -128,10 +128,10 @@
       "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "Elena",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "[REDACTED]\tRamirez\tElena\tActive",
+      "nearby_text": "[REDACTED]\t[REDACTED]\t[REDACTED]\tActive",
       "readable": "true"
     },
     {
@@ -142,11 +142,11 @@
       "text": "Active",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "[REDACTED]\tRamirez\tElena\tActive",
+      "nearby_text": "[REDACTED]\t[REDACTED]\t[REDACTED]\tActive",
       "readable": "true"
     }
   ],
-  "visible_text": "Member Search\nMember Number / Last Name\t\t\n\n\n[REDACTED]\tLast Name\t[REDACTED]\tStatus\n[REDACTED]\tRamirez\tElena\tActive",
+  "visible_text": "Member Search\nMember Number / Last Name\t\t\n\n\n[REDACTED]\tLast Name\t[REDACTED]\tStatus\n[REDACTED]\t[REDACTED]\t[REDACTED]\tActive",
   "recent_actions": [
     {
       "action": "fill",

@@ -4,10 +4,11 @@ from urllib.request import Request, urlopen
 
 import pytest
 
+from copy import deepcopy
 from cua.artifact.store import load_artifact
 from cua.replay.engine import ReplayEngine
 from cua.surface.web import PlaywrightSurface
-from cua.types import RunStatus
+from cua.types import OutcomeClass, RunStatus
 
 
 def enable_scenario(
@@ -206,6 +207,65 @@ async def test_replay_recovers_from_session_expiry():
                 ]
             )
             == "1842.17"
+        )
+
+    finally:
+        await surface.close()
+
+@pytest.mark.asyncio
+async def test_hard_failure_outcome_is_not_business_outcome():
+    artifact = load_artifact(
+        "capabilities/"
+        "lookup_savings_balance.json"
+    )
+
+    artifact = deepcopy(
+        artifact
+    )
+
+    member_not_found = next(
+        outcome
+        for outcome in artifact.expected_outcomes
+        if outcome.code == "MEMBER_NOT_FOUND"
+    )
+
+    member_not_found.classification = (
+        OutcomeClass.HARD_FAILURE
+    )
+
+    surface = PlaywrightSurface(
+        headless=True
+    )
+
+    await surface.start()
+
+    try:
+        engine = ReplayEngine(
+            surface
+        )
+
+        result = await engine.run(
+            artifact,
+            {
+                "member_id": "99999",
+            },
+        )
+
+        assert (
+            result.status
+            == RunStatus.FAILURE
+        )
+
+        assert result.error is not None
+
+        assert (
+            result.error.code
+            == "MEMBER_NOT_FOUND"
+        )
+
+        assert (
+            result.outcome_code
+            is None
         )
 
     finally:
