@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>
+    Meridian Core Admin - Login
+  </title>
+</head>
+
+<body>
+
+<form
+  method="post"
+  action="/login"
+>
+  {% if next_path %}
+  <input
+    type="hidden"
+    name="next"
+    value="{{ next_path }}"
+  >
+  {% endif %}
+
+  <table
+    border="1"
+    cellpadding="8"
+    cellspacing="0"
+    width="500"
+  >
+    <tr>
+      <td colspan="2">
+        <b>
+          Meridian Core Admin v3.2
+        </b>
+      </td>
+    </tr>
+
+    {% if error %}
+    <tr>
+      <td colspan="2">
+        {{ error }}
+      </td>
+    </tr>
+    {% endif %}
+
+    <tr>
+      <td>
+        <label for="ctl00_txtUser_r1">
+          Operator ID
+        </label>
+      </td>
+
+      <td>
+        <input
+          id="ctl00_txtUser_r1"
+          name="username"
+          type="text"
+          aria-label="Operator ID"
+          autocomplete="off"
+        >
+      </td>
+    </tr>
+
+    <tr>
+      <td>
+        Password
+      </td>
+
+      <td>
+        <input
+          id="ctl00_txtPwd_r2"
+          name="password"
+          type="password"
+          autocomplete="off"
+        >
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="2">
+        <input
+          type="submit"
+          value="Log In"
+        >
+      </td>
+    </tr>
+  </table>
+</form>
+
+</body>
+</html>

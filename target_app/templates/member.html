@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <title>Member Detail</title>
+</head>
+<body>
+
+<table border="1" cellpadding="6" cellspacing="0" width="800">
+  <tr>
+    <td colspan="4"><b>Member Detail</b></td>
+  </tr>
+  <tr>
+    <td>Member Number</td>
+    <td>{{ member.member_id }}</td>
+    <td>Name</td>
+    <td>{{ member.first_name }} {{ member.last_name }}</td>
+  </tr>
+</table>
+
+<br>
+
+<table border="1" cellpadding="6" cellspacing="0" width="800">
+  <tr>
+    <th>Account Number</th>
+    <th>Type</th>
+    <th>Status</th>
+    <th>Current Balance</th>
+  </tr>
+
+  {% for account in member.accounts %}
+  <tr>
+    <td>••••{{ account.account_number[-4:] }}</td>
+    <td>{{ account.type }}</td>
+    <td>{{ account.status }}</td>
+    <td>${{ account.balance }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+</body>
+</html>

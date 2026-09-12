@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <title>Member Search</title>
+</head>
+<body>
+
+{% if show_interstitial %}
+<div role="dialog">
+  <table border="1" cellpadding="10">
+    <tr>
+      <td><b>System Maintenance Notice</b></td>
+    </tr>
+    <tr>
+      <td>Scheduled maintenance will occur Sunday at 02:00.</td>
+    </tr>
+    <tr>
+      <td>
+        <button onclick="this.closest('[role=dialog]').remove()">Close</button>
+      </td>
+    </tr>
+  </table>
+</div>
+{% endif %}
+
+<table border="1" cellpadding="6" cellspacing="0" width="700">
+  <tr>
+    <td colspan="3"><b>Member Search</b></td>
+  </tr>
+
+  <form method="post">
+    <tr>
+      <td>Member Number / Last Name</td>
+      <td>
+        <input
+          id="ctl00_cph1_txtMbrNo_r3"
+          name="member_query"
+          type="text"
+          value="{{ query or '' }}"
+        >
+      </td>
+      <td>
+        <input type="submit" value="Search">
+      </td>
+    </tr>
+  </form>
+</table>
+
+{% if query is not none %}
+<br>
+
+<table border="1" cellpadding="6" cellspacing="0" width="700">
+  <tr>
+    <th>Member #</th>
+    <th>Last Name</th>
+    <th>First Name</th>
+    <th>Status</th>
+  </tr>
+
+  {% if results %}
+    {% for member in results %}
+    <tr>
+      <td>
+        <a href="{{ url_for('member_detail', member_id=member.member_id) }}">
+          {{ member.member_id }}
+        </a>
+      </td>
+      <td>{{ member.last_name }}</td>
+      <td>{{ member.first_name }}</td>
+      <td>
+        {% if member.restricted %}
+          Restricted
+        {% else %}
+          Active
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  {% else %}
+    <tr>
+      <td colspan="4">No member found</td>
+    </tr>
+  {% endif %}
+</table>
+{% endif %}
+
+</body>
+</html>

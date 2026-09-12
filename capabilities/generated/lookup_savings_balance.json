@@ -1,0 +1,325 @@
+{
+  "schema_version": "1.0",
+  "capability": {
+    "id": "lookup_savings_balance",
+    "version": "1.0.0",
+    "name": "Look up savings balance",
+    "description": "Given a member ID, locate the member and return the current savings balance.",
+    "approval_state": "draft"
+  },
+  "target": {
+    "app_id": "meridian-core-admin",
+    "vendor": "meridian",
+    "supported_versions": ">=3.0,<4.0",
+    "fingerprint": [
+      {
+        "kind": "text_visible",
+        "value": "Meridian Core Admin"
+      }
+    ]
+  },
+  "inputs": {
+    "member_id": {
+      "type": "string",
+      "required": true,
+      "pattern": "^[0-9]{5}$",
+      "redact_in_logs": true
+    }
+  },
+  "outputs": {
+    "savings_balance": {
+      "type": "decimal",
+      "redact_in_logs": true,
+      "return_to_caller": true,
+      "extract": {
+        "strategies": [
+          {
+            "kind": "table_cell",
+            "rank": 1,
+            "role": null,
+            "name": null,
+            "value": null,
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": "Savings",
+            "column_header": "Current Balance",
+            "x": null,
+            "y": null
+          }
+        ],
+        "parse_kind": "currency"
+      }
+    }
+  },
+  "steps": [
+    {
+      "id": "open_search",
+      "intent": "Open the member search page",
+      "action": "navigate",
+      "effect": "read_only",
+      "frame": null,
+      "target": null,
+      "value": {
+        "source": "literal",
+        "key": null,
+        "value": "http://127.0.0.1:5000/content/search"
+      },
+      "wait": {
+        "kind": "settled",
+        "timeout_ms": 5000
+      },
+      "checkpoint": {
+        "kind": "text_visible",
+        "key": null,
+        "value": "Member Search",
+        "pattern": null,
+        "target": null
+      },
+      "on_failure": "fail"
+    },
+    {
+      "id": "enter_member_id",
+      "intent": "Enter the member ID into the search field",
+      "action": "fill",
+      "effect": "read_only",
+      "frame": null,
+      "target": {
+        "strategies": [
+          {
+            "kind": "anchor_relative",
+            "rank": 1,
+            "role": null,
+            "name": null,
+            "value": null,
+            "anchor_text": "Member Number / Last Name",
+            "relationship": "following_input",
+            "row_anchor": null,
+            "column_header": null,
+            "x": null,
+            "y": null
+          },
+          {
+            "kind": "xpath",
+            "rank": 2,
+            "role": null,
+            "name": null,
+            "value": "//input[@name='member_query']",
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": null,
+            "column_header": null,
+            "x": null,
+            "y": null
+          }
+        ],
+        "degradation_policy": "warn_above_rank_3"
+      },
+      "value": {
+        "source": "input",
+        "key": "member_id",
+        "value": null
+      },
+      "wait": null,
+      "checkpoint": {
+        "kind": "field_value_matches_input",
+        "key": "member_id",
+        "value": null,
+        "pattern": null,
+        "target": null
+      },
+      "on_failure": "fail"
+    },
+    {
+      "id": "submit_search",
+      "intent": "Submit the member search form",
+      "action": "click",
+      "effect": "read_only",
+      "frame": null,
+      "target": {
+        "strategies": [
+          {
+            "kind": "role_name",
+            "rank": 1,
+            "role": "button",
+            "name": "Search",
+            "value": null,
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": null,
+            "column_header": null,
+            "x": null,
+            "y": null
+          },
+          {
+            "kind": "xpath",
+            "rank": 2,
+            "role": null,
+            "name": null,
+            "value": "//input[@type='submit' and @value='Search']",
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": null,
+            "column_header": null,
+            "x": null,
+            "y": null
+          }
+        ],
+        "degradation_policy": "warn_above_rank_3"
+      },
+      "value": null,
+      "wait": {
+        "kind": "settled",
+        "timeout_ms": 5000
+      },
+      "checkpoint": null,
+      "on_failure": "fail"
+    },
+    {
+      "id": "open_member",
+      "intent": "Open the matching member record",
+      "action": "click",
+      "effect": "read_only",
+      "frame": null,
+      "target": {
+        "strategies": [
+          {
+            "kind": "xpath",
+            "rank": 1,
+            "role": null,
+            "name": null,
+            "value": "//a[contains(@href, '/content/member/')]",
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": null,
+            "column_header": null,
+            "x": null,
+            "y": null
+          }
+        ],
+        "degradation_policy": "warn_above_rank_3"
+      },
+      "value": null,
+      "wait": {
+        "kind": "settled",
+        "timeout_ms": 5000
+      },
+      "checkpoint": {
+        "kind": "text_visible",
+        "key": null,
+        "value": "Member Detail",
+        "pattern": null,
+        "target": null
+      },
+      "on_failure": "fail"
+    },
+    {
+      "id": "read_balance",
+      "intent": "Read the savings balance from the account table",
+      "action": "read",
+      "effect": "read_only",
+      "frame": null,
+      "target": {
+        "strategies": [
+          {
+            "kind": "table_cell",
+            "rank": 1,
+            "role": null,
+            "name": null,
+            "value": null,
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": "Savings",
+            "column_header": "Current Balance",
+            "x": null,
+            "y": null
+          }
+        ],
+        "degradation_policy": "warn_above_rank_3"
+      },
+      "value": null,
+      "wait": null,
+      "checkpoint": {
+        "kind": "table_contains_row",
+        "key": null,
+        "value": "Savings",
+        "pattern": null,
+        "target": null
+      },
+      "on_failure": "fail"
+    }
+  ],
+  "recoveries": [
+    {
+      "code": "SESSION_EXPIRED",
+      "detector": {
+        "kind": "url_matches",
+        "value": "/login",
+        "role": null,
+        "column_header": null
+      },
+      "action": {
+        "kind": "reauthenticate",
+        "control": null
+      },
+      "then": "reverify_current_checkpoint",
+      "max_attempts": 1
+    }
+  ],
+  "expected_outcomes": [
+    {
+      "code": "MEMBER_NOT_FOUND",
+      "classification": "business_outcome",
+      "after_step": "submit_search",
+      "precedence": 10,
+      "detector": {
+        "kind": "text_visible",
+        "value": "No member found",
+        "role": null,
+        "column_header": null
+      },
+      "returns": {}
+    },
+    {
+      "code": "NO_SAVINGS_ACCOUNT",
+      "classification": "business_outcome",
+      "after_step": "open_member",
+      "precedence": 20,
+      "detector": {
+        "kind": "table_has_no_row_matching",
+        "value": "Savings",
+        "role": null,
+        "column_header": "Type"
+      },
+      "returns": {}
+    },
+    {
+      "code": "PERMISSION_DENIED",
+      "classification": "business_outcome",
+      "after_step": "open_member",
+      "precedence": 5,
+      "detector": {
+        "kind": "text_visible",
+        "value": "not authorized",
+        "role": null,
+        "column_header": null
+      },
+      "returns": {}
+    }
+  ],
+  "success_condition": {
+    "all_of": [
+      "step:read_balance"
+    ]
+  },
+  "policy": {
+    "max_steps": 10,
+    "max_duration_s": 60,
+    "declared_max_effect": "read_only"
+  },
+  "provenance": {
+    "discovered_by": "llm_discovery",
+    "discovery_run_id": "discovery_0a923be9",
+    "recorded_at": "2026-09-12T15:43:24.339548+00:00",
+    "reviewed_by": null
+  }
+}

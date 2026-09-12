@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "computer-use-automation-system"
+version = "0.1.0"
+description = "LLM-discovered, deterministic computer-use automation capabilities"
+requires-python = ">=3.11"
+
+dependencies = [
+    "flask",
+    "playwright",
+    "pydantic",
+    "typer",
+    "openai",
+    "python-dotenv",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+]
+
+[tool.setuptools.packages.find]
+include = ["cua*"]

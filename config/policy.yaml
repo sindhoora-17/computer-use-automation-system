@@ -1,0 +1,39 @@
+allowed_origins:
+  - "http://127.0.0.1:5000"
+
+allowed_path_prefixes:
+  - "/content/"
+  - "/main"
+  - "/nav"
+  - "/login"
+
+allowed_actions:
+  - navigate
+  - click
+  - fill
+  - read
+
+safe_click_terms:
+  - search
+  - view
+  - open
+  - back
+  - next
+  - close
+  - cancel
+
+reversible_terms:
+  - save
+  - update
+  - edit
+  - add
+
+irreversible_terms:
+  - confirm
+  - transfer
+  - delete
+  - close account
+  - open account
+  - create account
+  - approve
+  - submit payment
