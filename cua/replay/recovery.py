@@ -11,8 +11,8 @@ from cua.artifact.schema import (
 from cua.replay.detectors import (
     OutcomeDetector,
 )
-from cua.surface.web import (
-    PlaywrightSurface,
+from cua.surface.base import (
+    Surface,
 )
 
 
@@ -30,7 +30,7 @@ class RecoveryResult:
 class RecoveryEngine:
     def __init__(
         self,
-        surface: PlaywrightSurface,
+        surface: Surface,
     ) -> None:
         self.surface = surface
 

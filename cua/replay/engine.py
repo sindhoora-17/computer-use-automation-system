@@ -9,7 +9,9 @@ from typing import Any
 from cua.artifact.schema import (
     CapabilityArtifact,
     Checkpoint,
+    OutputSpec,
     Step,
+    TargetLocator,
     ValueSource,
 )
 from cua.escalation.session import (
@@ -28,7 +30,7 @@ from cua.replay.recovery import (
     RecoveryEngine,
     RecoveryError,
 )
-from cua.surface.web import PlaywrightSurface
+from cua.surface.base import Surface
 from cua.types import (
     RunError,
     RunResult,
@@ -39,8 +41,9 @@ from cua.types import (
 class ReplayEngine:
     def __init__(
         self,
-        surface: PlaywrightSurface,
+        surface: Surface,
         handoff_session: HandoffSession | None = None,
+        allow_draft: bool = False,
     ) -> None:
         self.surface = surface
 
@@ -57,6 +60,8 @@ class ReplayEngine:
         self.handoff_session = (
             handoff_session
         )
+
+        self.allow_draft = allow_draft
 
         self.logger: RunLogger | None = None
         self.capture: EvidenceCapture | None = None
@@ -106,7 +111,23 @@ class ReplayEngine:
             ),
         )
 
+        if (
+            artifact.capability.approval_state.value
+            != "approved"
+            and not self.allow_draft
+        ):
+            return await self._failure(
+                artifact,
+                code="ARTIFACT_NOT_APPROVED",
+                message=(
+                    "Capability artifact is not approved "
+                    "for deterministic replay."
+                ),
+            )
+
         started_at = time.monotonic()
+        completed_conditions: set[str] = set()
+        fingerprint_verified = False
 
         validation_error = (
             self._validate_inputs(
@@ -226,6 +247,37 @@ class ReplayEngine:
                     step
                 )
 
+                if (
+                    not fingerprint_verified
+                    and step.action == "navigate"
+                ):
+                    fingerprint_ok = (
+                        await self._verify_target_fingerprint(
+                            artifact
+                        )
+                    )
+
+                    if not fingerprint_ok:
+                        return await self._failure(
+                            artifact,
+                            code=(
+                                "TARGET_FINGERPRINT_MISMATCH"
+                            ),
+                            message=(
+                                "The current UI does not match "
+                                "the capability target fingerprint."
+                            ),
+                            step_id=step.id,
+                        )
+
+                    fingerprint_verified = True
+
+                    self.logger.log(
+                        "target_fingerprint_verified",
+                        step_id=step.id,
+                        app_id=artifact.target.app_id,
+                    )
+
             except Exception as exc:
                 return await self._failure(
                     artifact,
@@ -342,6 +394,19 @@ class ReplayEngine:
                         step_id=step.id,
                     )
 
+                    completed_conditions.add(
+                        f"step:{step.id}"
+                    )
+
+                    if self._success_condition_met(
+                        artifact,
+                        completed_conditions,
+                    ):
+                        return await self._build_success_result(
+                            artifact=artifact,
+                            step_id=step.id,
+                        )
+
                     continue
 
                 if (
@@ -355,6 +420,9 @@ class ReplayEngine:
                             inputs=inputs,
                             resolved_value=(
                                 resolved_value
+                            ),
+                            completed_conditions=(
+                                completed_conditions
                             ),
                         )
                     )
@@ -423,6 +491,19 @@ class ReplayEngine:
                     ),
                 )
 
+            if await self.surface.text_visible(
+                "Application error"
+            ):
+                return await self._failure(
+                    artifact,
+                    code="APPLICATION_ERROR",
+                    message=(
+                        "The target application returned "
+                        "an application error."
+                    ),
+                    step_id=step.id,
+                )
+
             checkpoint_ok = (
                 await self._verify_checkpoint(
                     step.checkpoint,
@@ -445,6 +526,19 @@ class ReplayEngine:
                     if handoff_failure is not None:
                         return handoff_failure
 
+                    completed_conditions.add(
+                        f"step:{step.id}"
+                    )
+
+                    if self._success_condition_met(
+                        artifact,
+                        completed_conditions,
+                    ):
+                        return await self._build_success_result(
+                        artifact=artifact,
+                        step_id=step.id,
+                        )
+
                     continue
 
                 return await self._failure(
@@ -462,32 +556,19 @@ class ReplayEngine:
                 step_id=step.id,
             )
 
-            if (
-                step.action == "read"
-                and output is not None
-            ):
-                self.logger.log(
-                    "run_succeeded",
-                    step_id=step.id,
-                )
+            completed_conditions.add(
+                f"step:{step.id}"
+            )
 
-                return RunResult(
-                    status=RunStatus.SUCCESS,
-                    capability_id=(
-                        artifact
-                        .capability
-                        .id
-                    ),
-                    capability_version=(
-                        artifact
-                        .capability
-                        .version
-                    ),
-                    outputs={
-                        "savings_balance":
-                            output
-                    },
-                )
+            if self._success_condition_met(
+                artifact,
+                completed_conditions,
+            ):
+                return await self._build_success_result(
+                artifact=artifact,
+                step_id=step.id,
+            )
+
 
         return await self._failure(
             artifact,
@@ -697,6 +778,7 @@ class ReplayEngine:
         step: Step,
         inputs: dict[str, Any],
         resolved_value: Any | None,
+        completed_conditions: set[str],
     ) -> RunResult | None:
         if self.logger is not None:
             self.logger.log(
@@ -794,28 +876,17 @@ class ReplayEngine:
                 step_id=step.id,
             )
 
-        if (
-            step.action == "read"
-            and output is not None
-        ):
-            if self.logger is not None:
-                self.logger.log(
-                    "run_succeeded",
-                    step_id=step.id,
-                )
+        completed_conditions.add(
+            f"step:{step.id}"
+        )
 
-            return RunResult(
-                status=RunStatus.SUCCESS,
-                capability_id=(
-                    artifact.capability.id
-                ),
-                capability_version=(
-                    artifact.capability.version
-                ),
-                outputs={
-                    "savings_balance":
-                        output
-                },
+        if self._success_condition_met(
+            artifact,
+            completed_conditions,
+        ):
+            return await self._build_success_result(
+                artifact=artifact,
+                step_id=step.id,
             )
 
         return None
@@ -929,15 +1000,9 @@ class ReplayEngine:
                     "Read step requires a target."
                 )
 
-            text = (
-                await self.surface.read_text(
-                    step.target,
-                    frame=step.frame,
-                )
-            )
-
-            return self._parse_currency(
-                text
+            return await self.surface.read_text(
+                step.target,
+                frame=step.frame,
             )
 
         raise ValueError(
@@ -1024,26 +1089,13 @@ class ReplayEngine:
             ):
                 return False
 
-            page = (
-                self.surface
-                ._require_page()
-            )
-
-            try:
-                await (
-                    self.surface
-                    .resolver
-                    .resolve(
-                        page,
-                        checkpoint.target,
-                        frame,
-                    )
+            return (
+                await self.surface
+                .target_visible(
+                    checkpoint.target,
+                    frame=frame,
                 )
-
-                return True
-
-            except Exception:
-                return False
+            )
 
         return False
 
@@ -1092,6 +1144,47 @@ class ReplayEngine:
             "Unsupported value source: "
             f"{value_source.source}"
         )
+
+    async def _verify_target_fingerprint(
+        self,
+        artifact: CapabilityArtifact,
+    ) -> bool:
+        rules = (
+            artifact.target.fingerprint
+        )
+
+        if not rules:
+            return True
+
+        for rule in rules:
+            if rule.kind == "text_visible":
+                if not await self.surface.text_visible(
+                    rule.value
+                ):
+                    return False
+
+                continue
+
+            if rule.kind == "url_pattern":
+                current_url = (
+                    await self.surface
+                    .current_url()
+                )
+
+                if (
+                    re.search(
+                        rule.value,
+                        current_url,
+                    )
+                    is None
+                ):
+                    return False
+
+                continue
+
+            return False
+
+        return True
 
     def _validate_inputs(
         self,
@@ -1172,27 +1265,245 @@ class ReplayEngine:
 
         return resolved
 
-    def _parse_currency(
+    def _success_condition_met(
         self,
-        value: str,
-    ) -> Decimal:
-        cleaned = (
-            value
-            .replace("$", "")
-            .replace(",", "")
-            .strip()
+        artifact: CapabilityArtifact,
+        completed_conditions: set[str],
+    ) -> bool:
+        required = (
+            artifact
+            .success_condition
+            .all_of
         )
 
+        if not required:
+            return False
+
+        return all(
+            condition
+            in completed_conditions
+            for condition in required
+        )
+
+    async def _build_success_result(
+        self,
+        artifact: CapabilityArtifact,
+        step_id: str,
+    ) -> RunResult:
         try:
-            return Decimal(
-                cleaned
+            resolved_outputs = (
+                await self._extract_outputs(
+                    artifact
+                )
             )
 
-        except InvalidOperation as exc:
+        except Exception as exc:
+            return await self._failure(
+                artifact,
+                code=(
+                    "OUTPUT_EXTRACTION_FAILED"
+                ),
+                message=str(exc),
+                step_id=step_id,
+            )
+
+        caller_outputs = {
+            name: value
+            for name, value
+            in resolved_outputs.items()
+            if (
+                artifact.outputs[
+                    name
+                ].return_to_caller
+            )
+        }
+
+        if self.logger is not None:
+            self.logger.log(
+                "run_succeeded",
+                step_id=step_id,
+                outputs=(
+                    self._outputs_for_log(
+                        artifact,
+                        resolved_outputs,
+                    )
+                ),
+            )
+
+        return RunResult(
+            status=RunStatus.SUCCESS,
+            capability_id=(
+                artifact.capability.id
+            ),
+            capability_version=(
+                artifact
+                .capability
+                .version
+            ),
+            outputs=caller_outputs,
+        )
+
+
+    async def _extract_outputs(
+        self,
+        artifact: CapabilityArtifact,
+    ) -> dict[str, Any]:
+        outputs: dict[
+            str,
+            Any,
+        ] = {}
+
+        for (
+            name,
+            spec,
+        ) in artifact.outputs.items():
+            if spec.extract is None:
+                raise ValueError(
+                    "Output "
+                    f"'{name}' does not "
+                    "define extraction rules."
+                )
+
+            target = TargetLocator(
+                strategies=(
+                    spec.extract.strategies
+                )
+            )
+
+            raw_value = (
+                await self.surface.read_text(
+                    target
+                )
+            )
+
+            outputs[name] = (
+                self._parse_output(
+                    raw_value,
+                    spec,
+                )
+            )
+
+        return outputs
+
+
+    def _parse_output(
+        self,
+        raw_value: str,
+        spec: OutputSpec,
+    ) -> Any:
+        if spec.extract is None:
             raise ValueError(
-                "Unable to parse currency: "
-                f"{value}"
-            ) from exc
+                "Output extraction "
+                "specification is missing."
+            )
+
+        parse_kind = (
+            spec.extract.parse_kind
+        )
+
+        value = raw_value.strip()
+
+        if parse_kind == "string":
+            return value
+
+        if parse_kind == "currency":
+            cleaned = (
+                value
+                .replace("$", "")
+                .replace(",", "")
+                .strip()
+            )
+
+            try:
+                return Decimal(
+                    cleaned
+                )
+
+            except InvalidOperation as exc:
+                raise ValueError(
+                    "Unable to parse "
+                    "currency value: "
+                    f"{raw_value}"
+                ) from exc
+
+        if parse_kind == "decimal":
+            cleaned = (
+                value
+                .replace(",", "")
+                .strip()
+            )
+
+            try:
+                return Decimal(
+                    cleaned
+                )
+
+            except InvalidOperation as exc:
+                raise ValueError(
+                    "Unable to parse "
+                    "decimal value: "
+                    f"{raw_value}"
+                ) from exc
+
+        if parse_kind == "integer":
+            cleaned = (
+                value
+                .replace(",", "")
+                .strip()
+            )
+
+            try:
+                return int(cleaned)
+
+            except ValueError as exc:
+                raise ValueError(
+                    "Unable to parse "
+                    "integer value: "
+                    f"{raw_value}"
+                ) from exc
+
+        raise ValueError(
+            "Unsupported output "
+            "parse kind: "
+            f"{parse_kind}"
+        )
+
+
+    def _outputs_for_log(
+        self,
+        artifact: CapabilityArtifact,
+        outputs: dict[str, Any],
+    ) -> dict[str, Any]:
+        logged: dict[
+            str,
+            Any,
+        ] = {}
+
+        for (
+            name,
+            value,
+        ) in outputs.items():
+            spec = (
+                artifact.outputs[
+                    name
+                ]
+            )
+
+            if spec.redact_in_logs:
+                logged[name] = (
+                    "[REDACTED]"
+                )
+
+            elif isinstance(
+                value,
+                Decimal,
+            ):
+                logged[name] = str(value)
+
+            else:
+                logged[name] = value
+
+        return logged
 
     async def _failure(
         self,

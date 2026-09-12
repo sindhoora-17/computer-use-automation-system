@@ -2,15 +2,15 @@
   {
     "action": "fill",
     "ref": "e3",
-    "value": "10001",
-    "reason": "Enter member number 10001 in the search field.",
+    "value": "[REDACTED]",
+    "reason": "Enter the provided member ID in the member search field.",
     "observed_url": "http://127.0.0.1:5000/content/search",
     "result": null,
     "target": {
       "strategies": [
         {
           "kind": "anchor_relative",
-          "rank": 1,
+          "rank": 2,
           "role": null,
           "name": null,
           "value": null,
@@ -18,12 +18,13 @@
           "relationship": "following_input",
           "row_anchor": null,
           "column_header": null,
+          "column_index": null,
           "x": null,
           "y": null
         },
         {
           "kind": "xpath",
-          "rank": 2,
+          "rank": 4,
           "role": null,
           "name": null,
           "value": "//input[@name='member_query']",
@@ -31,6 +32,7 @@
           "relationship": null,
           "row_anchor": null,
           "column_header": null,
+          "column_index": null,
           "x": null,
           "y": null
         }
@@ -42,7 +44,7 @@
     "action": "click",
     "ref": "e4",
     "value": null,
-    "reason": "Submit the already-filled member number search.",
+    "reason": "The member ID is already filled; click Search to submit the lookup.",
     "observed_url": "http://127.0.0.1:5000/content/search",
     "result": null,
     "target": {
@@ -57,12 +59,13 @@
           "relationship": null,
           "row_anchor": null,
           "column_header": null,
+          "column_index": null,
           "x": null,
           "y": null
         },
         {
           "kind": "xpath",
-          "rank": 2,
+          "rank": 4,
           "role": null,
           "name": null,
           "value": "//input[@type='submit' and @value='Search']",
@@ -70,6 +73,7 @@
           "relationship": null,
           "row_anchor": null,
           "column_header": null,
+          "column_index": null,
           "x": null,
           "y": null
         }
@@ -81,14 +85,28 @@
     "action": "click",
     "ref": "e10",
     "value": null,
-    "reason": "Open the member 10001 record to locate the current savings balance.",
+    "reason": "Open the member record for member [REDACTED].",
     "observed_url": "http://127.0.0.1:5000/content/search",
     "result": null,
     "target": {
       "strategies": [
         {
+          "kind": "href_prefix",
+          "rank": 2,
+          "role": null,
+          "name": null,
+          "value": "/content/member/",
+          "anchor_text": null,
+          "relationship": null,
+          "row_anchor": null,
+          "column_header": null,
+          "column_index": null,
+          "x": null,
+          "y": null
+        },
+        {
           "kind": "xpath",
-          "rank": 1,
+          "rank": 4,
           "role": null,
           "name": null,
           "value": "//a[contains(@href, '/content/member/')]",
@@ -96,6 +114,7 @@
           "relationship": null,
           "row_anchor": null,
           "column_header": null,
+          "column_index": null,
           "x": null,
           "y": null
         }
@@ -107,9 +126,9 @@
     "action": "read",
     "ref": "e13",
     "value": null,
-    "reason": "Read the current balance for the Savings account.",
-    "observed_url": "http://127.0.0.1:5000/content/member/10001",
-    "result": "$1842.17",
+    "reason": "Read the Savings account's current balance.",
+    "observed_url": "http://127.0.0.1:5000/content/member/[REDACTED]",
+    "result": "[REDACTED]",
     "target": {
       "strategies": [
         {
@@ -122,6 +141,21 @@
           "relationship": null,
           "row_anchor": "Savings",
           "column_header": "Current Balance",
+          "column_index": null,
+          "x": null,
+          "y": null
+        },
+        {
+          "kind": "table_position",
+          "rank": 4,
+          "role": null,
+          "name": null,
+          "value": null,
+          "anchor_text": null,
+          "relationship": null,
+          "row_anchor": "Savings",
+          "column_header": null,
+          "column_index": 3,
           "x": null,
           "y": null
         }
@@ -132,9 +166,9 @@
   {
     "action": "complete",
     "ref": null,
-    "value": null,
-    "reason": "The current savings balance for member 10001 is $1842.17.",
-    "observed_url": "http://127.0.0.1:5000/content/member/10001",
+    "value": "[REDACTED]",
+    "reason": "The current savings balance was read from the Savings account row.",
+    "observed_url": "http://127.0.0.1:5000/content/member/[REDACTED]",
     "result": null,
     "target": null
   }

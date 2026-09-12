@@ -4,47 +4,47 @@
   "elements": [
     {
       "ref": "e1",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Member Search",
       "current_value": "",
       "input_type": "",
       "nearby_text": "Member Search",
-      "readable": "True"
+      "readable": "true"
     },
     {
       "ref": "e2",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Member Number / Last Name",
       "current_value": "",
       "input_type": "",
       "nearby_text": "Member Number / Last Name",
-      "readable": "True"
+      "readable": "true"
     },
     {
       "ref": "e3",
-      "tag": "input",
+      "tag_name": "input",
       "role": "",
       "accessible_name": "",
       "text": "",
       "current_value": "",
       "input_type": "text",
       "nearby_text": "Member Number / Last Name",
-      "readable": "False"
+      "readable": "false"
     },
     {
       "ref": "e4",
-      "tag": "input",
+      "tag_name": "input",
       "role": "",
       "accessible_name": "Search",
       "text": "",
       "current_value": "Search",
       "input_type": "submit",
       "nearby_text": "Member Number / Last Name",
-      "readable": "False"
+      "readable": "false"
     }
   ],
   "visible_text": "Member Search\nMember Number / Last Name\t\t",

@@ -12,8 +12,11 @@ from pathlib import Path
 from cua.escalation.requests import (
     EscalationRequest,
 )
-from cua.surface.web import (
-    PlaywrightSurface,
+from cua.policy.redaction import (
+    Redactor,
+)
+from cua.surface.base import (
+    Surface,
 )
 
 
@@ -37,7 +40,7 @@ class HandoffSession:
 
     def __init__(
         self,
-        surface: PlaywrightSurface,
+        surface: Surface,
         evidence_dir: str | Path = (
             "evidence/escalation"
         ),
@@ -52,6 +55,8 @@ class HandoffSession:
             parents=True,
             exist_ok=True,
         )
+
+        self.redactor = Redactor()
 
         self._current_request: (
             EscalationRequest | None
@@ -129,6 +134,12 @@ class HandoffSession:
             await self.surface.current_url()
         )
 
+        redacted_url = (
+            self.redactor.redact_text(
+                current_url
+            )
+        )
+
         request = EscalationRequest(
             request_id=request_id,
             capability_id=(
@@ -138,10 +149,20 @@ class HandoffSession:
                 capability_version
             ),
             step_id=step_id,
-            reason=reason,
-            current_url=current_url,
+            reason=(
+                self.redactor.redact_text(
+                    reason
+                )
+                or ""
+            ),
+            current_url=(
+                redacted_url
+                or ""
+            ),
             checkpoint_description=(
-                checkpoint_description
+                self.redactor.redact_text(
+                    checkpoint_description
+                )
             ),
             screenshot_path=(
                 stored_screenshot
@@ -243,14 +264,24 @@ class HandoffSession:
             / "request.json"
         )
 
+        payload = (
+            request.model_dump(
+                mode="json"
+            )
+        )
+
+        payload = (
+            self.redactor.redact_value(
+                payload
+            )
+        )
+
         with path.open(
             "w",
             encoding="utf-8",
         ) as file:
             json.dump(
-                request.model_dump(
-                    mode="json"
-                ),
+                payload,
                 file,
                 indent=2,
             )

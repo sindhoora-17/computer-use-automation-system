@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cua.surface.web import PlaywrightSurface
+from cua.surface.base import Surface
 
 
 class EvidenceCapture:
@@ -23,7 +23,7 @@ class EvidenceCapture:
 
     async def failure_screenshot(
         self,
-        surface: PlaywrightSurface,
+        surface: Surface,
         step_id: str,
     ) -> str:
         path = (

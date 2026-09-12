@@ -13,47 +13,58 @@ from cua.discovery.prompts import (
 )
 from cua.discovery.recorder import (
     DiscoveryRecorder,
+    RecordedAction,
 )
 from cua.locator.harvester import (
     LocatorHarvester,
 )
-from cua.surface.web import (
-    PlaywrightSurface,
+from cua.policy.redaction import (
+    Redactor,
+)
+from cua.surface.observation import (
+    ObservedElement,
+)
+from cua.surface.base import (
+    Surface,
 )
 
 
 class DiscoveryRunner:
     def __init__(
         self,
-        surface: PlaywrightSurface,
+        surface: Surface,
         agent: DiscoveryAgent,
-        max_steps: int = 12,
+        max_steps: int = 10,
+        evidence_root: str | Path = (
+            "evidence/discovery"
+        ),
     ) -> None:
         self.surface = surface
         self.agent = agent
         self.max_steps = max_steps
 
+        self.evidence_root = Path(
+            evidence_root
+        )
+
         self.harvester = (
             LocatorHarvester()
         )
+
+        self.redactor = Redactor()
+
 
     async def run(
         self,
         goal: str,
     ) -> DiscoveryRecorder:
-        recorder = (
-            DiscoveryRecorder()
-        )
-
         run_id = (
-            f"discovery_"
+            "discovery_"
             f"{uuid.uuid4().hex[:8]}"
         )
 
         run_dir = (
-            Path(
-                "evidence/discovery"
-            )
+            self.evidence_root
             / run_id
         )
 
@@ -62,7 +73,13 @@ class DiscoveryRunner:
             exist_ok=True,
         )
 
-        completed = False
+        recorder = (
+            DiscoveryRecorder()
+        )
+
+        recent_actions: list[
+            dict[str, str | None]
+        ] = []
 
         try:
             for step_number in range(
@@ -70,89 +87,37 @@ class DiscoveryRunner:
                 self.max_steps + 1,
             ):
                 (
-                    elements,
+                    observed_elements,
                     visible_text,
                 ) = (
                     await self.surface
                     .observe_discovery()
                 )
 
-                page = (
-                    self.surface
-                    ._require_page()
+                current_url = (
+                    await self.surface
+                    .current_url()
                 )
 
-                recent_actions = [
-                    {
-                        "action": (
-                            action.action
-                        ),
-                        "ref": (
-                            action.ref
-                        ),
-                        "value": (
-                            action.value
-                        ),
-                        "reason": (
-                            action.reason
-                        ),
-                        "result": (
-                            action.result
-                        ),
-                    }
-                    for action
-                    in recorder.actions[-5:]
+
+                title = (
+                    await self.surface
+                    .page_title()
+                )
+
+                elements = [
+                    self._element_to_prompt_dict(
+                        element
+                    )
+                    for element
+                    in observed_elements
                 ]
 
                 observation = (
                     DiscoveryObservation(
-                        url=page.url,
-                        title=(
-                            await page.title()
-                        ),
-                        elements=[
-                            {
-                                "ref": (
-                                    element.ref
-                                ),
-                                "tag": (
-                                    element
-                                    .tag_name
-                                ),
-                                "role": (
-                                    element.role
-                                    or ""
-                                ),
-                                "accessible_name": (
-                                    element
-                                    .accessible_name
-                                ),
-                                "text": (
-                                    element.text
-                                ),
-                                "current_value": (
-                                    element
-                                    .current_value
-                                ),
-                                "input_type": (
-                                    element
-                                    .input_type
-                                    or ""
-                                ),
-                                "nearby_text": (
-                                    element
-                                    .nearby_text
-                                ),
-                                "readable": (
-                                    str(
-                                        element
-                                        .readable
-                                    )
-                                ),
-                            }
-                            for element
-                            in elements
-                        ],
+                        url=current_url,
+                        title=title,
+                        elements=elements,
                         visible_text=(
                             visible_text
                         ),
@@ -162,62 +127,39 @@ class DiscoveryRunner:
                     )
                 )
 
-                with (
-                    run_dir
-                    / (
-                        "observation_"
-                        f"{step_number}.json"
-                    )
-                ).open(
-                    "w",
-                    encoding="utf-8",
-                ) as file:
-                    json.dump(
-                        {
-                            "url": (
-                                observation.url
-                            ),
-                            "title": (
-                                observation.title
-                            ),
-                            "elements": (
-                                observation
-                                .elements
-                            ),
-                            "visible_text": (
-                                observation
-                                .visible_text
-                            ),
-                            "recent_actions": (
-                                observation
-                                .recent_actions
-                            ),
-                        },
-                        file,
-                        indent=2,
-                    )
+                self._save_observation(
+                    run_dir=run_dir,
+                    step_number=(
+                        step_number
+                    ),
+                    observation=observation,
+                )
 
-                await (
-                    self.surface
-                    .screenshot(
-                        str(
-                            run_dir
-                            / (
-                                "step_"
-                                f"{step_number}"
-                                ".png"
-                            )
+                await self.surface.screenshot(
+                    str(
+                        run_dir
+                        / (
+                            f"step_"
+                            f"{step_number}.png"
                         )
                     )
                 )
 
                 decision = (
-                    await self.agent
-                    .decide(
-                        goal,
-                        observation,
-                        DISCOVERY_SYSTEM_PROMPT,
+                    await self.agent.decide(
+                        goal=goal,
+                        observation=(
+                            observation
+                        ),
+                        system_prompt=(
+                            DISCOVERY_SYSTEM_PROMPT
+                        ),
                     )
+                )
+
+                current_url = (
+                    await self.surface
+                    .current_url()
                 )
 
                 if (
@@ -225,62 +167,61 @@ class DiscoveryRunner:
                     == "complete"
                 ):
                     recorder.record(
-                        action=(
-                            decision.action
-                        ),
-                        ref=(
-                            decision.ref
-                        ),
-                        value=(
-                            decision.value
-                        ),
-                        reason=(
-                            decision.reason
-                        ),
-                        observed_url=(
-                            observation.url
-                        ),
+                        RecordedAction(
+                            action="complete",
+                            ref=(
+                                decision.ref
+                            ),
+                            value=(
+                                decision.value
+                            ),
+                            reason=(
+                                decision.reason
+                            ),
+                            observed_url=(
+                                current_url
+                            ),
+                        )
                     )
 
-                    completed = True
-                    break
+                    return recorder
 
                 if (
                     decision.action
                     == "stuck"
                 ):
                     recorder.record(
-                        action=(
-                            decision.action
-                        ),
-                        ref=(
-                            decision.ref
-                        ),
-                        value=(
-                            decision.value
-                        ),
-                        reason=(
-                            decision.reason
-                        ),
-                        observed_url=(
-                            observation.url
-                        ),
+                        RecordedAction(
+                            action="stuck",
+                            ref=(
+                                decision.ref
+                            ),
+                            value=(
+                                decision.value
+                            ),
+                            reason=(
+                                decision.reason
+                            ),
+                            observed_url=(
+                                current_url
+                            ),
+                        )
                     )
 
                     raise RuntimeError(
                         "Discovery agent "
-                        "reported stuck: "
-                        f"{decision.reason}"
+                        "reported that it "
+                        "was stuck."
                     )
 
-                if not decision.ref:
+                if decision.ref is None:
                     raise RuntimeError(
-                        "Agent selected an "
-                        "action without an "
-                        "element ref."
+                        "Discovery action "
+                        f"'{decision.action}' "
+                        "requires an element ref."
                     )
 
-                selected_locator = (
+                locator = (
                     await self.surface
                     .get_discovery_locator(
                         decision.ref
@@ -290,24 +231,15 @@ class DiscoveryRunner:
                 target = (
                     await self.harvester
                     .harvest(
-                        selected_locator
+                        locator
                     )
                 )
 
-                result: str | None = None
+                result: str | None = (
+                    None
+                )
 
                 if (
-                    decision.action
-                    == "click"
-                ):
-                    await (
-                        self.surface
-                        .discovery_click(
-                            decision.ref
-                        )
-                    )
-
-                elif (
                     decision.action
                     == "fill"
                 ):
@@ -317,7 +249,7 @@ class DiscoveryRunner:
                     ):
                         raise RuntimeError(
                             "Fill action "
-                            "missing value."
+                            "requires a value."
                         )
 
                     await (
@@ -325,6 +257,17 @@ class DiscoveryRunner:
                         .discovery_fill(
                             decision.ref,
                             decision.value,
+                        )
+                    )
+
+                elif (
+                    decision.action
+                    == "click"
+                ):
+                    await (
+                        self.surface
+                        .discovery_click(
+                            decision.ref
                         )
                     )
 
@@ -347,45 +290,144 @@ class DiscoveryRunner:
                     )
 
                 recorder.record(
-                    action=(
-                        decision.action
-                    ),
-                    ref=(
-                        decision.ref
-                    ),
-                    value=(
-                        decision.value
-                    ),
-                    reason=(
-                        decision.reason
-                    ),
-                    observed_url=(
-                        observation.url
-                    ),
-                    result=result,
-                    target=target,
+                    RecordedAction(
+                        action=(
+                            decision.action
+                        ),
+                        ref=(
+                            decision.ref
+                        ),
+                        value=(
+                            decision.value
+                        ),
+                        reason=(
+                            decision.reason
+                        ),
+                        observed_url=(
+                            current_url
+                        ),
+                        result=result,
+                        target=target,
+                    )
                 )
 
-        finally:
-            with (
-                run_dir
-                / "actions.json"
-            ).open(
-                "w",
-                encoding="utf-8",
-            ) as file:
-                json.dump(
-                    recorder.as_dicts(),
-                    file,
-                    indent=2,
+                recent_actions.append(
+                    {
+                        "action": (
+                            decision.action
+                        ),
+                        "ref": (
+                            decision.ref
+                        ),
+                        "value": (
+                            decision.value
+                        ),
+                        "result": result,
+                    }
                 )
 
-        if not completed:
             raise RuntimeError(
-                "Discovery reached the "
-                f"{self.max_steps}-step "
-                "limit without completing "
-                "the goal."
+                "Discovery exceeded "
+                f"maximum steps "
+                f"({self.max_steps}) "
+                "without completion."
             )
 
-        return recorder
+        finally:
+            recorder.save(
+                run_dir
+                / "actions.json"
+            )
+
+    def _element_to_prompt_dict(
+        self,
+        element: ObservedElement,
+    ) -> dict[str, str]:
+        return {
+            "ref": (
+                element.ref
+            ),
+            "tag_name": (
+                element.tag_name
+            ),
+            "role": (
+                element.role
+                or ""
+            ),
+            "accessible_name": (
+                element.accessible_name
+                or ""
+            ),
+            "text": (
+                element.text
+                or ""
+            ),
+            "current_value": (
+                element.current_value
+                or ""
+            ),
+            "input_type": (
+                element.input_type
+                or ""
+            ),
+            "nearby_text": (
+                element.nearby_text
+                or ""
+            ),
+            "readable": (
+                "true"
+                if element.readable
+                else "false"
+            ),
+        }
+
+    def _save_observation(
+        self,
+        run_dir: Path,
+        step_number: int,
+        observation: (
+            DiscoveryObservation
+        ),
+    ) -> None:
+        path = (
+            run_dir
+            / (
+                "observation_"
+                f"{step_number}.json"
+            )
+        )
+
+        payload = {
+            "url": (
+                observation.url
+            ),
+            "title": (
+                observation.title
+            ),
+            "elements": (
+                observation.elements
+            ),
+            "visible_text": (
+                observation.visible_text
+            ),
+            "recent_actions": (
+                observation.recent_actions
+            ),
+        }
+
+        redacted_payload = (
+            self.redactor
+            .redact_discovery_payload(
+                payload
+            )
+        )
+
+        with path.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(
+                redacted_payload,
+                file,
+                indent=2,
+            )

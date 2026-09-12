@@ -1,224 +1,214 @@
 {
-  "url": "http://127.0.0.1:5000/content/member/10001",
+  "url": "http://127.0.0.1:5000/content/member/[REDACTED]",
   "title": "Member Detail",
   "elements": [
     {
       "ref": "e1",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Member Detail",
       "current_value": "",
       "input_type": "",
       "nearby_text": "Member Detail",
-      "readable": "True"
+      "readable": "true"
     },
     {
       "ref": "e2",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Member Number",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Member Number\t10001\tName\tElena Ramirez",
-      "readable": "True"
+      "nearby_text": "Member Number\t[REDACTED]\tName\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e3",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "10001",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Member Number\t10001\tName\tElena Ramirez",
-      "readable": "True"
+      "nearby_text": "Member Number\t[REDACTED]\tName\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e4",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Name",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Member Number\t10001\tName\tElena Ramirez",
-      "readable": "True"
+      "nearby_text": "Member Number\t[REDACTED]\tName\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e5",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "Elena Ramirez",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "Member Number\t10001\tName\tElena Ramirez",
-      "readable": "True"
+      "nearby_text": "Member Number\t[REDACTED]\tName\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e6",
-      "tag": "th",
+      "tag_name": "th",
       "role": "",
       "accessible_name": "",
       "text": "Account Number",
       "current_value": "",
       "input_type": "",
       "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
-      "readable": "True"
+      "readable": "true"
     },
     {
       "ref": "e7",
-      "tag": "th",
+      "tag_name": "th",
       "role": "",
       "accessible_name": "",
       "text": "Type",
       "current_value": "",
       "input_type": "",
       "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
-      "readable": "True"
+      "readable": "true"
     },
     {
       "ref": "e8",
-      "tag": "th",
+      "tag_name": "th",
       "role": "",
       "accessible_name": "",
       "text": "Status",
       "current_value": "",
       "input_type": "",
       "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
-      "readable": "True"
+      "readable": "true"
     },
     {
       "ref": "e9",
-      "tag": "th",
+      "tag_name": "th",
       "role": "",
       "accessible_name": "",
       "text": "Current Balance",
       "current_value": "",
       "input_type": "",
       "nearby_text": "Account Number\tType\tStatus\tCurrent Balance",
-      "readable": "True"
+      "readable": "true"
     },
     {
       "ref": "e10",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "\u2022\u2022\u2022\u20224217",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t$1842.17",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e11",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Savings",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t$1842.17",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e12",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Active",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t$1842.17",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e13",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "$1842.17",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t$1842.17",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e14",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "\u2022\u2022\u2022\u20228244",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t$522.40",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e15",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Checking",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t$522.40",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e16",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
       "text": "Active",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t$522.40",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "readable": "true"
     },
     {
       "ref": "e17",
-      "tag": "td",
+      "tag_name": "td",
       "role": "",
       "accessible_name": "",
-      "text": "$522.40",
+      "text": "[REDACTED]",
       "current_value": "",
       "input_type": "",
-      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t$522.40",
-      "readable": "True"
+      "nearby_text": "\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
+      "readable": "true"
     }
   ],
-  "visible_text": "Member Detail\nMember Number\t10001\tName\tElena Ramirez\n\n\nAccount Number\tType\tStatus\tCurrent Balance\n\u2022\u2022\u2022\u20224217\tSavings\tActive\t$1842.17\n\u2022\u2022\u2022\u20228244\tChecking\tActive\t$522.40",
+  "visible_text": "Member Detail\nMember Number\t[REDACTED]\tName\t[REDACTED]\n\n\nAccount Number\tType\tStatus\tCurrent Balance\n\u2022\u2022\u2022\u20224217\tSavings\tActive\t[REDACTED]\n\u2022\u2022\u2022\u20228244\tChecking\tActive\t[REDACTED]",
   "recent_actions": [
     {
       "action": "fill",
       "ref": "e3",
-      "value": "10001",
-      "reason": "Enter member number 10001 in the search field.",
+      "value": "[REDACTED]",
       "result": null
     },
     {
       "action": "click",
       "ref": "e4",
       "value": null,
-      "reason": "Submit the already-filled member number search.",
       "result": null
     },
     {
       "action": "click",
       "ref": "e10",
       "value": null,
-      "reason": "Open the member 10001 record to locate the current savings balance.",
       "result": null
-    },
-    {
-      "action": "read",
-      "ref": "e13",
-      "value": null,
-      "reason": "Read the current balance for the Savings account.",
-      "result": "$1842.17"
     }
   ]
 }

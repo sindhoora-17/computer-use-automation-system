@@ -57,18 +57,6 @@ async def test_replay_handoff_resumes_same_session(
         "lookup_savings_balance.json"
     )
 
-    open_member = next(
-        step
-        for step
-        in artifact.steps
-        if step.id
-        == "open_member"
-    )
-
-    open_member.on_failure = (
-        "escalate"
-    )
-
     enable_scenario(
         "interstitial"
     )

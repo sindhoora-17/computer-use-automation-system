@@ -14,10 +14,14 @@
     "vendor": "meridian",
     "supported_versions": ">=3.0,<4.0",
     "fingerprint": [
-      {
+    {
         "kind": "text_visible",
-        "value": "Meridian Core Admin"
-      }
+        "value": "Member Search"
+    },
+    {
+        "kind": "url_pattern",
+        "value": "/content/search"
+    }
     ]
   },
 
@@ -162,7 +166,7 @@
         "kind": "text_visible",
         "value": "Member Detail"
       },
-      "on_failure": "fail"
+      "on_failure": "escalate"
     },
 
     {

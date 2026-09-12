@@ -14,7 +14,11 @@
     "fingerprint": [
       {
         "kind": "text_visible",
-        "value": "Meridian Core Admin"
+        "value": "Member Search"
+      },
+      {
+        "kind": "url_pattern",
+        "value": "/content/search"
       }
     ]
   },
@@ -43,6 +47,7 @@
             "relationship": null,
             "row_anchor": "Savings",
             "column_header": "Current Balance",
+            "column_index": null,
             "x": null,
             "y": null
           }
@@ -87,7 +92,7 @@
         "strategies": [
           {
             "kind": "anchor_relative",
-            "rank": 1,
+            "rank": 2,
             "role": null,
             "name": null,
             "value": null,
@@ -95,12 +100,13 @@
             "relationship": "following_input",
             "row_anchor": null,
             "column_header": null,
+            "column_index": null,
             "x": null,
             "y": null
           },
           {
             "kind": "xpath",
-            "rank": 2,
+            "rank": 4,
             "role": null,
             "name": null,
             "value": "//input[@name='member_query']",
@@ -108,6 +114,7 @@
             "relationship": null,
             "row_anchor": null,
             "column_header": null,
+            "column_index": null,
             "x": null,
             "y": null
           }
@@ -147,12 +154,13 @@
             "relationship": null,
             "row_anchor": null,
             "column_header": null,
+            "column_index": null,
             "x": null,
             "y": null
           },
           {
             "kind": "xpath",
-            "rank": 2,
+            "rank": 4,
             "role": null,
             "name": null,
             "value": "//input[@type='submit' and @value='Search']",
@@ -160,6 +168,7 @@
             "relationship": null,
             "row_anchor": null,
             "column_header": null,
+            "column_index": null,
             "x": null,
             "y": null
           }
@@ -183,8 +192,22 @@
       "target": {
         "strategies": [
           {
+            "kind": "href_prefix",
+            "rank": 2,
+            "role": null,
+            "name": null,
+            "value": "/content/member/",
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": null,
+            "column_header": null,
+            "column_index": null,
+            "x": null,
+            "y": null
+          },
+          {
             "kind": "xpath",
-            "rank": 1,
+            "rank": 4,
             "role": null,
             "name": null,
             "value": "//a[contains(@href, '/content/member/')]",
@@ -192,6 +215,7 @@
             "relationship": null,
             "row_anchor": null,
             "column_header": null,
+            "column_index": null,
             "x": null,
             "y": null
           }
@@ -210,7 +234,7 @@
         "pattern": null,
         "target": null
       },
-      "on_failure": "fail"
+      "on_failure": "escalate"
     },
     {
       "id": "read_balance",
@@ -230,6 +254,21 @@
             "relationship": null,
             "row_anchor": "Savings",
             "column_header": "Current Balance",
+            "column_index": null,
+            "x": null,
+            "y": null
+          },
+          {
+            "kind": "table_position",
+            "rank": 4,
+            "role": null,
+            "name": null,
+            "value": null,
+            "anchor_text": null,
+            "relationship": null,
+            "row_anchor": "Savings",
+            "column_header": null,
+            "column_index": 3,
             "x": null,
             "y": null
           }
@@ -318,8 +357,8 @@
   },
   "provenance": {
     "discovered_by": "llm_discovery",
-    "discovery_run_id": "discovery_0a923be9",
-    "recorded_at": "2026-09-12T15:43:24.339548+00:00",
+    "discovery_run_id": "discovery_8acdd0a2",
+    "recorded_at": "2026-09-12T22:30:32.982753+00:00",
     "reviewed_by": null
   }
 }

@@ -9,7 +9,7 @@ from cua.policy.allowlist import (
     AllowlistViolation,
 )
 from cua.policy.effects import EffectClassifier
-from cua.surface.web import PlaywrightSurface
+from cua.surface.base import Surface
 from cua.types import Effect
 
 
@@ -27,7 +27,7 @@ class PolicyDecision:
 class PolicyEngine:
     def __init__(
         self,
-        surface: PlaywrightSurface,
+        surface: Surface,
         config_path: str | Path = (
             "config/policy.yaml"
         ),

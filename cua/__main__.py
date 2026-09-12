@@ -191,6 +191,14 @@ def replay(
             "a visible window."
         ),
     ),
+    allow_draft: bool = typer.Option(
+        False,
+        "--allow-draft",
+        help=(
+            "Allow replay of a draft capability "
+            "for local development/testing."
+        ),
+    ),
 ) -> None:
     """
     Replay a capability deterministically without an LLM.
@@ -205,6 +213,7 @@ def replay(
             ),
             member_id=member_id,
             headless=headless,
+            allow_draft=allow_draft,
         )
     )
 
@@ -351,6 +360,7 @@ async def _run_replay(
     artifact_path: Path,
     member_id: str,
     headless: bool,
+    allow_draft: bool,
 ) -> None:
     artifact = load_artifact(
         artifact_path
@@ -364,7 +374,8 @@ async def _run_replay(
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            allow_draft=allow_draft,
         )
 
         result = await engine.run(
@@ -392,16 +403,6 @@ async def _run_handoff_demo(
 ) -> None:
     artifact = load_artifact(
         artifact_path
-    )
-
-    open_member = next(
-        step
-        for step in artifact.steps
-        if step.id == "open_member"
-    )
-
-    open_member.on_failure = (
-        "escalate"
     )
 
     _set_scenario(
@@ -465,6 +466,7 @@ async def _run_handoff_demo(
         engine = ReplayEngine(
             surface=surface,
             handoff_session=handoff,
+            allow_draft=True,
         )
 
         result = await engine.run(
@@ -524,7 +526,8 @@ async def _run_failure_demo(
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            allow_draft=True,
         )
 
         result = await engine.run(

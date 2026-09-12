@@ -8,7 +8,9 @@ from typing import Literal
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from cua.surface.web import PlaywrightSurface
+from cua.surface.base import (
+    Surface,
+)
 
 
 class AgentDecision(BaseModel):
@@ -60,7 +62,7 @@ class DiscoveryObservation:
 class DiscoveryAgent:
     def __init__(
         self,
-        surface: PlaywrightSurface,
+        surface: Surface,
         model: str | None = None,
     ) -> None:
         self.surface = surface

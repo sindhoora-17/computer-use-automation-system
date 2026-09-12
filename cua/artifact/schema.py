@@ -15,6 +15,8 @@ class LocatorStrategy(BaseModel):
         "table_cell",
         "xpath",
         "bbox",
+        "href_prefix",
+        "table_position",
     ]
 
     rank: int = Field(ge=1)
@@ -29,6 +31,7 @@ class LocatorStrategy(BaseModel):
 
     row_anchor: str | None = None
     column_header: str | None = None
+    column_index: int | None = None
 
     x: float | None = None
     y: float | None = None

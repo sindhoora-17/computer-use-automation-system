@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, cast
 
-from playwright.async_api import Frame, Locator, Page
+from playwright.async_api import (
+    Frame,
+    Locator,
+    Page,
+)
 
-from cua.artifact.schema import LocatorStrategy, TargetLocator
+from cua.artifact.schema import (
+    LocatorStrategy,
+    TargetLocator,
+)
 
 
 @dataclass
@@ -28,7 +36,9 @@ class LocatorResolver:
         scope: Page | Frame = page
 
         if frame_name:
-            frame = page.frame(name=frame_name)
+            frame = page.frame(
+                name=frame_name
+            )
 
             if frame is None:
                 raise LocatorResolutionError(
@@ -69,10 +79,26 @@ class LocatorResolver:
                     )
                     continue
 
+                is_degraded = (
+                    strategy.rank > 3
+                )
+
+                if (
+                    is_degraded
+                    and target.degradation_policy
+                    == "fail_above_rank_3"
+                ):
+                    errors.append(
+                        f"rank {strategy.rank} "
+                        f"({strategy.kind}): "
+                        "rejected by degradation policy"
+                    )
+                    continue
+
                 return ResolutionResult(
                     locator=first,
                     strategy=strategy,
-                    degraded=strategy.rank > 1,
+                    degraded=is_degraded,
                 )
 
             except Exception as exc:
@@ -103,7 +129,10 @@ class LocatorResolver:
                 )
 
             return scope.get_by_role(
-                strategy.role,
+                cast(
+                    Any,
+                    strategy.role,
+                ),
                 name=strategy.name,
             )
 
@@ -152,8 +181,46 @@ class LocatorResolver:
 
             return await self._resolve_table_cell(
                 scope,
-                row_anchor=strategy.row_anchor,
-                column_header=strategy.column_header,
+                row_anchor=(
+                    strategy.row_anchor
+                ),
+                column_header=(
+                    strategy.column_header
+                ),
+            )
+
+        if strategy.kind == "href_prefix":
+            if strategy.value is None:
+                raise ValueError(
+                    "href_prefix requires value"
+                )
+
+            return scope.locator(
+                "xpath="
+                "//a[starts-with(@href, "
+                f"{self._xpath_literal(strategy.value)}"
+                ")]"
+            )
+
+        if strategy.kind == "table_position":
+            if strategy.row_anchor is None:
+                raise ValueError(
+                    "table_position requires row_anchor"
+                )
+
+            if strategy.column_index is None:
+                raise ValueError(
+                    "table_position requires column_index"
+                )
+
+            return await self._resolve_table_position(
+                scope,
+                row_anchor=(
+                    strategy.row_anchor
+                ),
+                column_index=(
+                    strategy.column_index
+                ),
             )
 
         if strategy.kind == "xpath":
@@ -192,20 +259,40 @@ class LocatorResolver:
         discovered column index.
         """
 
-        tables = scope.locator("table")
-        table_count = await tables.count()
+        tables = scope.locator(
+            "table"
+        )
 
-        for table_index in range(table_count):
-            table = tables.nth(table_index)
+        table_count = (
+            await tables.count()
+        )
 
-            headers = table.locator("th")
-            header_count = await headers.count()
+        for table_index in range(
+            table_count
+        ):
+            table = tables.nth(
+                table_index
+            )
 
-            matching_header_index: int | None = None
+            headers = table.locator(
+                "th"
+            )
 
-            for index in range(header_count):
+            header_count = (
+                await headers.count()
+            )
+
+            matching_header_index: (
+                int | None
+            ) = None
+
+            for index in range(
+                header_count
+            ):
                 header_text = (
-                    await headers.nth(index).inner_text()
+                    await headers
+                    .nth(index)
+                    .inner_text()
                 ).strip()
 
                 if (
@@ -223,17 +310,27 @@ class LocatorResolver:
                 has_text=row_anchor,
             )
 
-            row_count = await rows.count()
+            row_count = (
+                await rows.count()
+            )
 
             if row_count == 0:
                 continue
 
             row = rows.first
-            cells = row.locator("td")
 
-            cell_count = await cells.count()
+            cells = row.locator(
+                "td"
+            )
 
-            if matching_header_index >= cell_count:
+            cell_count = (
+                await cells.count()
+            )
+
+            if (
+                matching_header_index
+                >= cell_count
+            ):
                 raise ValueError(
                     "Resolved header index "
                     f"{matching_header_index}, but matching "
@@ -248,6 +345,78 @@ class LocatorResolver:
             "Unable to find table cell for "
             f"row '{row_anchor}' and "
             f"column '{column_header}'."
+        )
+
+    async def _resolve_table_position(
+        self,
+        scope: Page | Frame,
+        row_anchor: str,
+        column_index: int,
+    ) -> Locator:
+        """
+        Resolve a table cell using a semantic row anchor
+        and a positional column fallback.
+
+        This is intentionally weaker than table_cell because
+        it depends on column ordering rather than a header name.
+        """
+
+        tables = scope.locator(
+            "table"
+        )
+
+        table_count = (
+            await tables.count()
+        )
+
+        for table_index in range(
+            table_count
+        ):
+            table = tables.nth(
+                table_index
+            )
+
+            rows = table.locator(
+                "tr",
+                has_text=row_anchor,
+            )
+
+            row_count = (
+                await rows.count()
+            )
+
+            if row_count == 0:
+                continue
+
+            for row_index in range(
+                row_count
+            ):
+                row = rows.nth(
+                    row_index
+                )
+
+                cells = row.locator(
+                    "td"
+                )
+
+                cell_count = (
+                    await cells.count()
+                )
+
+                if (
+                    column_index
+                    >= cell_count
+                ):
+                    continue
+
+                return cells.nth(
+                    column_index
+                )
+
+        raise ValueError(
+            "Unable to find table cell for "
+            f"row '{row_anchor}' at "
+            f"column index {column_index}."
         )
 
     def _xpath_literal(

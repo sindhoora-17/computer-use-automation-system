@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any, cast
 
 from playwright.async_api import (
     Browser,
@@ -625,3 +626,256 @@ class PlaywrightSurface:
             path=str(output),
             full_page=True,
         )
+
+    async def page_title(
+        self,
+    ) -> str:
+        page = self._require_page()
+
+        return await page.title()
+
+    async def target_visible(
+        self,
+        target: TargetLocator,
+        frame: str | None = None,
+    ) -> bool:
+        page = self._require_page()
+
+        try:
+            result = (
+                await self.resolver.resolve(
+                    page,
+                    target,
+                    frame,
+                )
+            )
+
+            return await (
+                result.locator
+                .is_visible()
+            )
+
+        except Exception:
+            return False
+
+    async def role_visible(
+        self,
+        role: str,
+        name: str | None = None,
+        frame: str | None = None,
+    ) -> bool:
+        page = self._require_page()
+
+        scope = page
+
+        if frame is not None:
+            selected_frame = page.frame(
+                name=frame
+            )
+
+            if selected_frame is None:
+                return False
+
+            scope = selected_frame
+
+        aria_role = cast(
+            Any,
+            role,
+        )
+
+        if name is not None:
+            locator = scope.get_by_role(
+                aria_role,
+                name=name,
+            )
+        else:
+            locator = scope.get_by_role(
+                aria_role
+            )
+
+        return (
+            await locator.count()
+            > 0
+        )
+
+    async def table_has_no_row_matching(
+        self,
+        value: str,
+        column_header: str | None = None,
+        frame: str | None = None,
+    ) -> bool:
+        """
+        Return True only when a relevant table exists and
+        none of its data rows contain the requested value.
+
+        If no relevant table exists, return False so an
+        unrelated error or interstitial page is not mistaken
+        for a legitimate business outcome.
+        """
+        page = self._require_page()
+
+        if frame is not None:
+            scope = page.frame(
+                name=frame
+            )
+
+            if scope is None:
+                return False
+
+        else:
+            scope = page
+
+        tables = scope.locator(
+            "table"
+        )
+
+        table_count = (
+            await tables.count()
+        )
+
+        for table_index in range(
+            table_count
+        ):
+            table = tables.nth(
+                table_index
+            )
+
+            rows = table.locator(
+                "tr"
+            )
+
+            row_count = (
+                await rows.count()
+            )
+
+            if row_count == 0:
+                continue
+
+            header_index: (
+                int | None
+            ) = None
+
+            data_start_index = 0
+            relevant_table = False
+
+            for row_index in range(
+                row_count
+            ):
+                row = rows.nth(
+                    row_index
+                )
+
+                headers = row.locator(
+                    "th"
+                )
+
+                header_count = (
+                    await headers.count()
+                )
+
+                if header_count == 0:
+                    continue
+
+                header_values = [
+                    (
+                        await headers
+                        .nth(index)
+                        .inner_text()
+                    ).strip()
+                    for index in range(
+                        header_count
+                    )
+                ]
+
+                if column_header is None:
+                    relevant_table = True
+                    data_start_index = (
+                        row_index + 1
+                    )
+                    break
+
+                for (
+                    index,
+                    header_value,
+                ) in enumerate(
+                    header_values
+                ):
+                    if (
+                        header_value
+                        .casefold()
+                        == column_header
+                        .casefold()
+                    ):
+                        header_index = index
+                        relevant_table = True
+                        data_start_index = (
+                            row_index + 1
+                        )
+                        break
+
+                if relevant_table:
+                    break
+
+            if not relevant_table:
+                continue
+
+            for row_index in range(
+                data_start_index,
+                row_count,
+            ):
+                row = rows.nth(
+                    row_index
+                )
+
+                cells = row.locator(
+                    "td"
+                )
+
+                cell_count = (
+                    await cells.count()
+                )
+
+                if cell_count == 0:
+                    continue
+
+                if column_header is not None:
+                    if (
+                        header_index is None
+                        or header_index
+                        >= cell_count
+                    ):
+                        continue
+
+                    cell_value = (
+                        await cells
+                        .nth(
+                            header_index
+                        )
+                        .inner_text()
+                    ).strip()
+
+                    if (
+                        cell_value
+                        .casefold()
+                        == value
+                        .casefold()
+                    ):
+                        return False
+
+                else:
+                    row_text = (
+                        await row.inner_text()
+                    )
+
+                    if (
+                        value.casefold()
+                        in row_text.casefold()
+                    ):
+                        return False
+
+            # We found the relevant table, but no matching
+            # row value was present.
+            return True
+
+        # No relevant table was found.
+        return False

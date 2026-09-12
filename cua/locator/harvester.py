@@ -9,6 +9,10 @@ from cua.artifact.schema import (
     TargetLocator,
 )
 
+SEMANTIC_RANK = 1
+RELATIONAL_RANK = 2
+XPATH_RANK = 4
+BBOX_RANK = 5
 
 class LocatorHarvester:
     """
@@ -239,8 +243,6 @@ class LocatorHarvester:
             LocatorStrategy
         ] = []
 
-        rank = 1
-
         tag = (
             metadata.get(
                 "tag",
@@ -321,6 +323,16 @@ class LocatorHarvester:
             or ""
         ).strip()
 
+        column_index_raw = metadata.get(
+            "columnIndex"
+        )
+
+        column_index = (
+            int(column_index_raw)
+            if column_index_raw is not None
+            else None
+        )
+
         row_texts = [
             str(item).strip()
             for item in metadata.get(
@@ -350,7 +362,7 @@ class LocatorHarvester:
                 strategies.append(
                     LocatorStrategy(
                         kind="table_cell",
-                        rank=rank,
+                        rank=SEMANTIC_RANK,
                         row_anchor=row_anchor,
                         column_header=(
                             column_header
@@ -358,7 +370,20 @@ class LocatorHarvester:
                     )
                 )
 
-                rank += 1
+                if (
+                    column_index
+                    is not None
+                ):
+                    strategies.append(
+                        LocatorStrategy(
+                            kind="table_position",
+                            rank=XPATH_RANK,
+                            row_anchor=row_anchor,
+                            column_index=(
+                                column_index
+                            ),
+                        )
+                    )
 
         # Proper HTML labels are preferred when available.
         if (
@@ -373,12 +398,10 @@ class LocatorHarvester:
             strategies.append(
                 LocatorStrategy(
                     kind="label_text",
-                    rank=rank,
+                    rank=SEMANTIC_RANK,
                     value=label_text,
                 )
             )
-
-            rank += 1
 
         # Legacy forms often use a nearby table cell as the
         # only human-readable label.
@@ -402,7 +425,7 @@ class LocatorHarvester:
                 strategies.append(
                     LocatorStrategy(
                         kind="anchor_relative",
-                        rank=rank,
+                        rank=RELATIONAL_RANK,
                         anchor_text=(
                             anchor_text
                         ),
@@ -412,7 +435,6 @@ class LocatorHarvester:
                     )
                 )
 
-                rank += 1
 
         role_name = (
             aria_label
@@ -438,13 +460,33 @@ class LocatorHarvester:
             strategies.append(
                 LocatorStrategy(
                     kind="role_name",
-                    rank=rank,
+                    rank=SEMANTIC_RANK,
                     role=role,
                     name=role_name,
                 )
             )
 
-            rank += 1
+        if (
+            tag == "a"
+            and href
+        ):
+            href_prefix = (
+                self._generalize_href(
+                    href
+                )
+            )
+
+            if (
+                href_prefix
+                and href_prefix != href
+            ):
+                strategies.append(
+                    LocatorStrategy(
+                        kind="href_prefix",
+                        rank=RELATIONAL_RANK,
+                        value=href_prefix,
+                    )
+                )
 
         xpath = self._build_xpath(
             tag=tag,
@@ -459,7 +501,7 @@ class LocatorHarvester:
             strategies.append(
                 LocatorStrategy(
                     kind="xpath",
-                    rank=rank,
+                    rank=XPATH_RANK,
                     value=xpath,
                 )
             )

@@ -1,0 +1,13 @@
+{"timestamp": "2026-09-12T22:37:04.526661+00:00", "event": "run_started", "run_id": "replay_390c6ad8", "capability_id": "lookup_savings_balance", "capability_version": "1.0.0", "inputs": {"member_id": "[REDACTED]"}}
+{"timestamp": "2026-09-12T22:37:04.529602+00:00", "event": "step_started", "step_id": "open_search", "action": "navigate", "intent": "Open the member search page"}
+{"timestamp": "2026-09-12T22:37:04.529863+00:00", "event": "policy_authorized", "step_id": "open_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T22:37:04.732637+00:00", "event": "target_fingerprint_verified", "step_id": "open_search", "app_id": "meridian-core-admin"}
+{"timestamp": "2026-09-12T22:37:04.734629+00:00", "event": "checkpoint_passed", "step_id": "open_search"}
+{"timestamp": "2026-09-12T22:37:04.734759+00:00", "event": "step_started", "step_id": "enter_member_id", "action": "fill", "intent": "Enter the member ID into the search field"}
+{"timestamp": "2026-09-12T22:37:04.766243+00:00", "event": "policy_authorized", "step_id": "enter_member_id", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T22:37:04.791898+00:00", "event": "locator_resolved", "step_id": "enter_member_id", "strategy_kind": "anchor_relative", "strategy_rank": 2, "degraded": false}
+{"timestamp": "2026-09-12T22:37:04.792173+00:00", "event": "checkpoint_passed", "step_id": "enter_member_id"}
+{"timestamp": "2026-09-12T22:37:04.792336+00:00", "event": "step_started", "step_id": "submit_search", "action": "click", "intent": "Submit the member search form"}
+{"timestamp": "2026-09-12T22:37:04.815792+00:00", "event": "policy_authorized", "step_id": "submit_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-12T22:37:04.919449+00:00", "event": "locator_resolved", "step_id": "submit_search", "strategy_kind": "role_name", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-12T22:37:04.940344+00:00", "event": "business_outcome", "step_id": "submit_search", "outcome_code": "MEMBER_NOT_FOUND"}
