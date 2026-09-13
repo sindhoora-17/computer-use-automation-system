@@ -802,7 +802,7 @@ python -m pytest -q
 Current suite:
 
 ```text
-30 passed
+31 passed
 ```
 
 The suite covers:
