@@ -1,23 +1,29 @@
 import os
+from copy import deepcopy
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import pytest
 
-from copy import deepcopy
 from cua.artifact.store import load_artifact
+from cua.policy.engine import PolicyEngine
 from cua.replay.engine import ReplayEngine
 from cua.surface.web import PlaywrightSurface
 from cua.types import OutcomeClass, RunStatus
 
 
-def enable_scenario(
+def set_scenario(
     name: str,
+    enabled: bool,
 ) -> None:
     data = urlencode(
         {
             "name": name,
-            "enabled": "true",
+            "enabled": (
+                "true"
+                if enabled
+                else "false"
+            ),
         }
     ).encode()
 
@@ -38,7 +44,9 @@ def enable_scenario(
 
 
 @pytest.mark.asyncio
-async def test_replay_success():
+async def test_replay_success(
+    tmp_path,
+):
     artifact = load_artifact(
         "capabilities/"
         "lookup_savings_balance.json"
@@ -52,7 +60,8 @@ async def test_replay_success():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(
@@ -81,7 +90,9 @@ async def test_replay_success():
 
 
 @pytest.mark.asyncio
-async def test_replay_member_not_found():
+async def test_replay_member_not_found(
+    tmp_path,
+):
     artifact = load_artifact(
         "capabilities/"
         "lookup_savings_balance.json"
@@ -95,7 +106,8 @@ async def test_replay_member_not_found():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(
@@ -120,7 +132,9 @@ async def test_replay_member_not_found():
 
 
 @pytest.mark.asyncio
-async def test_replay_no_savings_account():
+async def test_replay_no_savings_account(
+    tmp_path,
+):
     artifact = load_artifact(
         "capabilities/"
         "lookup_savings_balance.json"
@@ -134,7 +148,8 @@ async def test_replay_no_savings_account():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(
@@ -159,7 +174,62 @@ async def test_replay_no_savings_account():
 
 
 @pytest.mark.asyncio
-async def test_replay_recovers_from_session_expiry():
+async def test_application_error_is_artifact_hard_failure(
+    tmp_path,
+):
+    artifact = load_artifact(
+        "capabilities/"
+        "lookup_savings_balance.json"
+    )
+
+    set_scenario(
+        "app_error",
+        True,
+    )
+
+    surface = PlaywrightSurface(
+        headless=True
+    )
+
+    await surface.start()
+
+    try:
+        engine = ReplayEngine(
+            surface,
+            evidence_dir=tmp_path,
+        )
+
+        result = await engine.run(
+            artifact,
+            {
+                "member_id": "10001",
+            },
+        )
+
+        assert (
+            result.status
+            == RunStatus.FAILURE
+        )
+
+        assert result.error is not None
+
+        assert (
+            result.error.code
+            == "APPLICATION_ERROR"
+        )
+
+    finally:
+        set_scenario(
+            "app_error",
+            False,
+        )
+        await surface.close()
+
+
+@pytest.mark.asyncio
+async def test_replay_recovers_from_session_expiry(
+    tmp_path,
+):
     os.environ[
         "TARGET_APP_USERNAME"
     ] = "operator"
@@ -173,8 +243,9 @@ async def test_replay_recovers_from_session_expiry():
         "lookup_savings_balance.json"
     )
 
-    enable_scenario(
-        "session_expired"
+    set_scenario(
+        "session_expired",
+        True,
     )
 
     surface = PlaywrightSurface(
@@ -185,7 +256,8 @@ async def test_replay_recovers_from_session_expiry():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(
@@ -210,10 +282,17 @@ async def test_replay_recovers_from_session_expiry():
         )
 
     finally:
+        set_scenario(
+            "session_expired",
+            False,
+        )
         await surface.close()
 
+
 @pytest.mark.asyncio
-async def test_hard_failure_outcome_is_not_business_outcome():
+async def test_hard_failure_outcome_is_not_business_outcome(
+    tmp_path,
+):
     artifact = load_artifact(
         "capabilities/"
         "lookup_savings_balance.json"
@@ -241,7 +320,8 @@ async def test_hard_failure_outcome_is_not_business_outcome():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(
@@ -270,3 +350,74 @@ async def test_hard_failure_outcome_is_not_business_outcome():
 
     finally:
         await surface.close()
+
+
+@pytest.mark.asyncio
+async def test_fingerprint_checked_before_non_navigate_first_step(
+    tmp_path,
+):
+    artifact = load_artifact(
+        "capabilities/"
+        "lookup_savings_balance.json"
+    )
+
+    artifact = deepcopy(
+        artifact
+    )
+
+    artifact.steps = artifact.steps[1:]
+
+    surface = PlaywrightSurface(
+        headless=True
+    )
+
+    await surface.start()
+
+    try:
+        await surface.navigate(
+            "http://127.0.0.1:5000/login"
+        )
+
+        engine = ReplayEngine(
+            surface,
+            evidence_dir=tmp_path,
+        )
+
+        result = await engine.run(
+            artifact,
+            {
+                "member_id": "10001",
+            },
+        )
+
+        assert (
+            result.status
+            == RunStatus.FAILURE
+        )
+
+        assert result.error is not None
+
+        assert (
+            result.error.code
+            == "TARGET_FINGERPRINT_MISMATCH"
+        )
+
+    finally:
+        await surface.close()
+
+
+def test_replay_engine_uses_injected_policy():
+    surface = PlaywrightSurface(
+        headless=True
+    )
+
+    policy = PolicyEngine(
+        surface
+    )
+
+    engine = ReplayEngine(
+        surface,
+        policy=policy,
+    )
+
+    assert engine.policy is policy

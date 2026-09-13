@@ -1,0 +1,17 @@
+{"timestamp": "2026-09-13T00:48:22.536996+00:00", "event": "run_started", "run_id": "replay_f6a46e79", "capability_id": "lookup_savings_balance", "capability_version": "1.0.0", "inputs": {"member_id": "[REDACTED]"}}
+{"timestamp": "2026-09-13T00:48:22.538457+00:00", "event": "step_started", "step_id": "open_search", "action": "navigate", "intent": "Open the member search page"}
+{"timestamp": "2026-09-13T00:48:22.538948+00:00", "event": "policy_authorized", "step_id": "open_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-13T00:48:22.863163+00:00", "event": "target_fingerprint_verified", "step_id": "open_search", "app_id": "meridian-core-admin"}
+{"timestamp": "2026-09-13T00:48:22.864784+00:00", "event": "checkpoint_passed", "step_id": "open_search"}
+{"timestamp": "2026-09-13T00:48:22.864901+00:00", "event": "step_started", "step_id": "enter_member_id", "action": "fill", "intent": "Enter the member ID into the search field"}
+{"timestamp": "2026-09-13T00:48:22.896176+00:00", "event": "policy_authorized", "step_id": "enter_member_id", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-13T00:48:22.911682+00:00", "event": "locator_resolved", "step_id": "enter_member_id", "strategy_kind": "anchor_relative", "strategy_rank": 2, "degraded": false}
+{"timestamp": "2026-09-13T00:48:22.911843+00:00", "event": "checkpoint_passed", "step_id": "enter_member_id"}
+{"timestamp": "2026-09-13T00:48:22.911898+00:00", "event": "step_started", "step_id": "submit_search", "action": "click", "intent": "Submit the member search form"}
+{"timestamp": "2026-09-13T00:48:22.933136+00:00", "event": "policy_authorized", "step_id": "submit_search", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-13T00:48:23.023243+00:00", "event": "locator_resolved", "step_id": "submit_search", "strategy_kind": "role_name", "strategy_rank": 1, "degraded": false}
+{"timestamp": "2026-09-13T00:48:23.036669+00:00", "event": "checkpoint_passed", "step_id": "submit_search"}
+{"timestamp": "2026-09-13T00:48:23.036838+00:00", "event": "step_started", "step_id": "open_member", "action": "click", "intent": "Open the matching member record"}
+{"timestamp": "2026-09-13T00:48:23.058546+00:00", "event": "policy_authorized", "step_id": "open_member", "classified_effect": "read_only", "reason": "Policy checks passed."}
+{"timestamp": "2026-09-13T00:48:23.130766+00:00", "event": "locator_resolved", "step_id": "open_member", "strategy_kind": "href_prefix", "strategy_rank": 2, "degraded": false}
+{"timestamp": "2026-09-13T00:48:23.183893+00:00", "event": "run_failed", "code": "APPLICATION_ERROR", "message": "A declared hard-failure outcome was detected.", "step_id": "open_member", "screenshot": "evidence/replay/replay_f6a46e79/screenshots/failure_open_member.png"}

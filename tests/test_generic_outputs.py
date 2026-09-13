@@ -15,7 +15,9 @@ from cua.types import RunStatus
 
 
 @pytest.mark.asyncio
-async def test_replay_uses_artifact_output_name():
+async def test_replay_uses_artifact_output_name(
+    tmp_path,
+):
     artifact = load_artifact(
         "capabilities/"
         "lookup_savings_balance.json"
@@ -41,7 +43,8 @@ async def test_replay_uses_artifact_output_name():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(
@@ -81,7 +84,9 @@ async def test_replay_uses_artifact_output_name():
 
 
 @pytest.mark.asyncio
-async def test_output_can_be_hidden_from_caller():
+async def test_output_can_be_hidden_from_caller(
+    tmp_path,
+):
     artifact = load_artifact(
         "capabilities/"
         "lookup_savings_balance.json"
@@ -103,7 +108,8 @@ async def test_output_can_be_hidden_from_caller():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(
@@ -129,7 +135,9 @@ async def test_output_can_be_hidden_from_caller():
 
 
 @pytest.mark.asyncio
-async def test_unsatisfied_success_condition_fails():
+async def test_unsatisfied_success_condition_fails(
+    tmp_path,
+):
     artifact = load_artifact(
         "capabilities/"
         "lookup_savings_balance.json"
@@ -151,7 +159,8 @@ async def test_unsatisfied_success_condition_fails():
 
     try:
         engine = ReplayEngine(
-            surface
+            surface,
+            evidence_dir=tmp_path,
         )
 
         result = await engine.run(

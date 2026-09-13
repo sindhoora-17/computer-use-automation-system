@@ -1,15 +1,19 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
+from pathlib import Path
 import re
 import time
-import uuid
-from decimal import Decimal, InvalidOperation
 from typing import Any
+import uuid
 
 from cua.artifact.schema import (
     CapabilityArtifact,
     Checkpoint,
+    ExpectedOutcome,
     OutputSpec,
+    RecoveryRule,
     Step,
     TargetLocator,
     ValueSource,
@@ -39,12 +43,21 @@ from cua.types import (
 )
 
 
+@dataclass
+class RunContext:
+    inputs: dict[str, Any]
+    completed_conditions: set[str]
+    fingerprint_verified: bool = False
+
+
 class ReplayEngine:
     def __init__(
         self,
         surface: Surface,
         handoff_session: HandoffSession | None = None,
         allow_draft: bool = False,
+        evidence_dir: str | Path = "evidence/replay",
+        policy: PolicyEngine | None = None,
     ) -> None:
         self.surface = surface
 
@@ -54,8 +67,10 @@ class ReplayEngine:
             surface
         )
 
-        self.policy = PolicyEngine(
-            surface
+        self.policy = (
+            policy
+            if policy is not None
+            else PolicyEngine(surface)
         )
 
         self.handoff_session = (
@@ -63,6 +78,7 @@ class ReplayEngine:
         )
 
         self.allow_draft = allow_draft
+        self.evidence_dir = evidence_dir
 
         self.logger: RunLogger | None = None
         self.capture: EvidenceCapture | None = None
@@ -77,7 +93,8 @@ class ReplayEngine:
         )
 
         self.logger = RunLogger(
-            run_id
+            run_id,
+            base_dir=self.evidence_dir,
         )
 
         self.capture = EvidenceCapture(
@@ -126,10 +143,6 @@ class ReplayEngine:
                 ),
             )
 
-        started_at = time.monotonic()
-        completed_conditions: set[str] = set()
-        fingerprint_verified = False
-
         validation_error = (
             self._validate_inputs(
                 artifact,
@@ -157,6 +170,12 @@ class ReplayEngine:
                 ),
             )
 
+        started_at = time.monotonic()
+        ctx = RunContext(
+            inputs=inputs,
+            completed_conditions=set(),
+        )
+
         for step in artifact.steps:
             elapsed = (
                 time.monotonic()
@@ -177,432 +196,14 @@ class ReplayEngine:
                     step_id=step.id,
                 )
 
-            self.logger.log(
-                "step_started",
-                step_id=step.id,
-                action=step.action,
-                intent=step.intent,
-            )
-
-            try:
-                resolved_value = None
-
-                if step.action in {
-                    "navigate",
-                    "fill",
-                }:
-                    resolved_value = (
-                        self._resolve_value(
-                            step.value,
-                            inputs,
-                        )
-                    )
-
-                decision = (
-                    await self.policy.authorize(
-                        step,
-                        resolved_value=(
-                            str(resolved_value)
-                            if resolved_value
-                            is not None
-                            else None
-                        ),
-                    )
-                )
-
-                self.logger.log(
-                    "policy_authorized",
-                    step_id=step.id,
-                    classified_effect=(
-                        decision
-                        .classified_effect
-                        .value
-                    ),
-                    reason=decision.reason,
-                )
-
-            except PolicyViolation as exc:
-                self.logger.log(
-                    "policy_blocked",
-                    step_id=step.id,
-                    reason=str(exc),
-                )
-
-                return await self._failure(
-                    artifact,
-                    code="POLICY_VIOLATION",
-                    message=str(exc),
-                    step_id=step.id,
-                )
-
-            try:
-                output = (
-                    await self._execute_step(
-                        step,
-                        inputs,
-                        resolved_value,
-                    )
-                )
-
-                self._log_locator_resolution(
-                    step
-                )
-
-                if (
-                    not fingerprint_verified
-                    and step.action == "navigate"
-                ):
-                    fingerprint_ok = (
-                        await self._verify_target_fingerprint(
-                            artifact
-                        )
-                    )
-
-                    if not fingerprint_ok:
-                        return await self._failure(
-                            artifact,
-                            code=(
-                                "TARGET_FINGERPRINT_MISMATCH"
-                            ),
-                            message=(
-                                "The current UI does not match "
-                                "the capability target fingerprint."
-                            ),
-                            step_id=step.id,
-                        )
-
-                    fingerprint_verified = True
-
-                    self.logger.log(
-                        "target_fingerprint_verified",
-                        step_id=step.id,
-                        app_id=artifact.target.app_id,
-                    )
-
-            except Exception as exc:
-                return await self._failure(
-                    artifact,
-                    code="STEP_EXECUTION_FAILED",
-                    message=str(exc),
-                    step_id=step.id,
-                )
-
-            recovery_rule = (
-                await self.recovery_engine.detect(
-                    artifact.recoveries,
-                    frame=step.frame,
-                )
-            )
-
-            if recovery_rule is not None:
-                self.logger.log(
-                    "recovery_detected",
-                    step_id=step.id,
-                    recovery_code=(
-                        recovery_rule.code
-                    ),
-                    recovery_action=(
-                        recovery_rule
-                        .action
-                        .kind
-                    ),
-                    resume_mode=(
-                        recovery_rule.then
-                    ),
-                )
-
-                try:
-                    self.logger.log(
-                        "recovery_started",
-                        step_id=step.id,
-                        recovery_code=(
-                            recovery_rule.code
-                        ),
-                    )
-
-                    recovery_result = (
-                        await self.recovery_engine
-                        .recover(
-                            recovery_rule
-                        )
-                    )
-
-                except RecoveryError as exc:
-                    self.logger.log(
-                        "recovery_failed",
-                        step_id=step.id,
-                        recovery_code=(
-                            recovery_rule.code
-                        ),
-                        reason=str(exc),
-                    )
-
-                    return await self._failure(
-                        artifact,
-                        code="RECOVERY_FAILED",
-                        message=str(exc),
-                        step_id=step.id,
-                    )
-
-                self.logger.log(
-                    "recovery_succeeded",
-                    step_id=step.id,
-                    recovery_code=(
-                        recovery_result.code
-                    ),
-                    resume_mode=(
-                        recovery_result.resume_mode
-                    ),
-                )
-
-                if (
-                    recovery_result.resume_mode
-                    == "reverify_current_checkpoint"
-                ):
-                    checkpoint_ok = (
-                        await self._verify_checkpoint(
-                            step.checkpoint,
-                            inputs,
-                            frame=step.frame,
-                        )
-                    )
-
-                    if not checkpoint_ok:
-                        return await self._failure(
-                            artifact,
-                            code=(
-                                "RECOVERY_CHECKPOINT_FAILED"
-                            ),
-                            message=(
-                                "Recovery succeeded, but "
-                                "the interrupted step's "
-                                "checkpoint was not "
-                                "satisfied."
-                            ),
-                            step_id=step.id,
-                        )
-
-                    self.logger.log(
-                        "recovery_checkpoint_passed",
-                        step_id=step.id,
-                        recovery_code=(
-                            recovery_rule.code
-                        ),
-                    )
-
-                    self.logger.log(
-                        "checkpoint_passed",
-                        step_id=step.id,
-                    )
-
-                    completed_conditions.add(
-                        f"step:{step.id}"
-                    )
-
-                    if self._success_condition_met(
-                        artifact,
-                        completed_conditions,
-                    ):
-                        return await self._build_success_result(
-                            artifact=artifact,
-                            step_id=step.id,
-                        )
-
-                    continue
-
-                if (
-                    recovery_result.resume_mode
-                    == "retry_current_step"
-                ):
-                    retry_result = (
-                        await self._retry_step(
-                            artifact=artifact,
-                            step=step,
-                            inputs=inputs,
-                            resolved_value=(
-                                resolved_value
-                            ),
-                            completed_conditions=(
-                                completed_conditions
-                            ),
-                        )
-                    )
-
-                    if retry_result is not None:
-                        return retry_result
-
-                    continue
-
-                return await self._failure(
-                    artifact,
-                    code=(
-                        "UNSUPPORTED_RECOVERY_RESUME"
-                    ),
-                    message=(
-                        "Recovery returned unsupported "
-                        "resume mode: "
-                        f"{recovery_result.resume_mode}"
-                    ),
-                    step_id=step.id,
-                )
-
-            outcome = (
-                await self.outcome_detector
-                .detect_expected_outcome(
-                    self.surface,
-                    artifact.expected_outcomes,
-                    after_step=step.id,
-                    frame=step.frame,
-                )
-            )
-
-            if outcome is not None:
-                if (
-                    outcome.classification
-                    == OutcomeClass.BUSINESS_OUTCOME
-                ):
-                    self.logger.log(
-                        "business_outcome",
-                        step_id=step.id,
-                        outcome_code=(
-                            outcome.code
-                        ),
-                    )
-
-                    return RunResult(
-                        status=(
-                            RunStatus
-                            .BUSINESS_OUTCOME
-                        ),
-                        capability_id=(
-                            artifact
-                            .capability
-                            .id
-                        ),
-                        capability_version=(
-                            artifact
-                            .capability
-                            .version
-                        ),
-                        outcome_code=(
-                            outcome.code
-                        ),
-                        outputs=(
-                            self
-                            ._resolve_return_values(
-                                outcome.returns,
-                                inputs,
-                            )
-                        ),
-                    )
-
-                if (
-                    outcome.classification
-                    == OutcomeClass.HARD_FAILURE
-                ):
-                    return await self._failure(
-                        artifact,
-                        code=outcome.code,
-                        message=(
-                            "A declared hard-failure "
-                            "outcome was detected."
-                        ),
-                        step_id=step.id,
-                    )
-
-                if (
-                    outcome.classification
-                    == OutcomeClass.RECOVERABLE
-                ):
-                    return await self._failure(
-                        artifact,
-                        code=outcome.code,
-                        message=(
-                            "A recoverable outcome was "
-                            "detected, but no recovery rule "
-                            "handled it."
-                        ),
-                        step_id=step.id,
-                    )
-
-            if await self.surface.text_visible(
-                "Application error"
-            ):
-                return await self._failure(
-                    artifact,
-                    code="APPLICATION_ERROR",
-                    message=(
-                        "The target application returned "
-                        "an application error."
-                    ),
-                    step_id=step.id,
-                )
-
-            checkpoint_ok = (
-                await self._verify_checkpoint(
-                    step.checkpoint,
-                    inputs,
-                    frame=step.frame,
-                )
-            )
-
-            if not checkpoint_ok:
-                (
-                    handoff_handled,
-                    handoff_failure,
-                ) = await self._attempt_handoff(
-                    artifact=artifact,
-                    step=step,
-                    inputs=inputs,
-                )
-
-                if handoff_handled:
-                    if handoff_failure is not None:
-                        return handoff_failure
-
-                    completed_conditions.add(
-                        f"step:{step.id}"
-                    )
-
-                    if self._success_condition_met(
-                        artifact,
-                        completed_conditions,
-                    ):
-                        return await self._build_success_result(
-                        artifact=artifact,
-                        step_id=step.id,
-                        )
-
-                    continue
-
-                return await self._failure(
-                    artifact,
-                    code="CHECKPOINT_FAILED",
-                    message=(
-                        "Checkpoint failed after "
-                        f"step '{step.id}'."
-                    ),
-                    step_id=step.id,
-                )
-
-            self.logger.log(
-                "checkpoint_passed",
-                step_id=step.id,
-            )
-
-            completed_conditions.add(
-                f"step:{step.id}"
-            )
-
-            if self._success_condition_met(
-                artifact,
-                completed_conditions,
-            ):
-                return await self._build_success_result(
+            step_result = await self._run_step(
                 artifact=artifact,
-                step_id=step.id,
+                step=step,
+                ctx=ctx,
             )
 
+            if step_result is not None:
+                return step_result
 
         return await self._failure(
             artifact,
@@ -614,6 +215,464 @@ class ReplayEngine:
                 "without producing the declared "
                 "result."
             ),
+        )
+
+    async def _run_step(
+        self,
+        artifact: CapabilityArtifact,
+        step: Step,
+        ctx: RunContext,
+    ) -> RunResult | None:
+        logger = self._require_logger()
+
+        logger.log(
+            "step_started",
+            step_id=step.id,
+            action=step.action,
+            intent=step.intent,
+        )
+
+        if (
+            not ctx.fingerprint_verified
+            and step.action != "navigate"
+        ):
+            fingerprint_failure = (
+                await self._verify_fingerprint(
+                    artifact=artifact,
+                    step=step,
+                )
+            )
+
+            if fingerprint_failure is not None:
+                return fingerprint_failure
+
+            ctx.fingerprint_verified = True
+
+        resolved_value: Any | None = None
+
+        try:
+            if step.action in {
+                "navigate",
+                "fill",
+            }:
+                resolved_value = (
+                    self._resolve_value(
+                        step.value,
+                        ctx.inputs,
+                    )
+                )
+
+            decision = (
+                await self.policy.authorize(
+                    step,
+                    resolved_value=(
+                        str(resolved_value)
+                        if resolved_value
+                        is not None
+                        else None
+                    ),
+                )
+            )
+
+            logger.log(
+                "policy_authorized",
+                step_id=step.id,
+                classified_effect=(
+                    decision
+                    .classified_effect
+                    .value
+                ),
+                reason=decision.reason,
+            )
+
+        except PolicyViolation as exc:
+            logger.log(
+                "policy_blocked",
+                step_id=step.id,
+                reason=str(exc),
+            )
+
+            return await self._failure(
+                artifact,
+                code="POLICY_VIOLATION",
+                message=str(exc),
+                step_id=step.id,
+            )
+
+        try:
+            await self._execute_step(
+                step,
+                ctx.inputs,
+                resolved_value,
+            )
+
+            self._log_locator_resolution(
+                step
+            )
+
+            if (
+                not ctx.fingerprint_verified
+                and step.action == "navigate"
+            ):
+                fingerprint_failure = (
+                    await self._verify_fingerprint(
+                        artifact=artifact,
+                        step=step,
+                    )
+                )
+
+                if fingerprint_failure is not None:
+                    return fingerprint_failure
+
+                ctx.fingerprint_verified = True
+
+        except Exception as exc:
+            return await self._failure(
+                artifact,
+                code="STEP_EXECUTION_FAILED",
+                message=str(exc),
+                step_id=step.id,
+            )
+
+        recovery_rule = (
+            await self.recovery_engine.detect(
+                artifact.recoveries,
+                frame=step.frame,
+            )
+        )
+
+        if recovery_rule is not None:
+            return await self._handle_recovery(
+                artifact=artifact,
+                step=step,
+                ctx=ctx,
+                resolved_value=resolved_value,
+                recovery_rule=recovery_rule,
+            )
+
+        outcome = (
+            await self.outcome_detector
+            .detect_expected_outcome(
+                self.surface,
+                artifact.expected_outcomes,
+                after_step=step.id,
+                frame=step.frame,
+            )
+        )
+
+        if outcome is not None:
+            return await self._result_for_outcome(
+                artifact=artifact,
+                outcome=outcome,
+                step_id=step.id,
+                inputs=ctx.inputs,
+            )
+
+        checkpoint_ok = (
+            await self._verify_checkpoint(
+                step.checkpoint,
+                ctx.inputs,
+                frame=step.frame,
+            )
+        )
+
+        if not checkpoint_ok:
+            (
+                handoff_handled,
+                handoff_failure,
+            ) = await self._attempt_handoff(
+                artifact=artifact,
+                step=step,
+                inputs=ctx.inputs,
+            )
+
+            if handoff_handled:
+                if handoff_failure is not None:
+                    return handoff_failure
+
+                ctx.completed_conditions.add(
+                    f"step:{step.id}"
+                )
+
+                if self._success_condition_met(
+                    artifact,
+                    ctx.completed_conditions,
+                ):
+                    return await self._build_success_result(
+                        artifact=artifact,
+                        step_id=step.id,
+                    )
+
+                return None
+
+            return await self._failure(
+                artifact,
+                code="CHECKPOINT_FAILED",
+                message=(
+                    "Checkpoint failed after "
+                    f"step '{step.id}'."
+                ),
+                step_id=step.id,
+            )
+
+        logger.log(
+            "checkpoint_passed",
+            step_id=step.id,
+        )
+
+        ctx.completed_conditions.add(
+            f"step:{step.id}"
+        )
+
+        if self._success_condition_met(
+            artifact,
+            ctx.completed_conditions,
+        ):
+            return await self._build_success_result(
+                artifact=artifact,
+                step_id=step.id,
+            )
+
+        return None
+
+    async def _verify_fingerprint(
+        self,
+        artifact: CapabilityArtifact,
+        step: Step,
+    ) -> RunResult | None:
+        logger = self._require_logger()
+
+        fingerprint_ok = (
+            await self._verify_target_fingerprint(
+                artifact
+            )
+        )
+
+        if not fingerprint_ok:
+            return await self._failure(
+                artifact,
+                code=(
+                    "TARGET_FINGERPRINT_MISMATCH"
+                ),
+                message=(
+                    "The current UI does not match "
+                    "the capability target fingerprint."
+                ),
+                step_id=step.id,
+            )
+
+        logger.log(
+            "target_fingerprint_verified",
+            step_id=step.id,
+            app_id=artifact.target.app_id,
+        )
+
+        return None
+
+    async def _handle_recovery(
+        self,
+        artifact: CapabilityArtifact,
+        step: Step,
+        ctx: RunContext,
+        resolved_value: Any | None,
+        recovery_rule: RecoveryRule,
+    ) -> RunResult | None:
+        logger = self._require_logger()
+
+        logger.log(
+            "recovery_detected",
+            step_id=step.id,
+            recovery_code=(
+                recovery_rule.code
+            ),
+            recovery_action=(
+                recovery_rule.action.kind
+            ),
+            resume_mode=(
+                recovery_rule.then
+            ),
+        )
+
+        try:
+            logger.log(
+                "recovery_started",
+                step_id=step.id,
+                recovery_code=(
+                    recovery_rule.code
+                ),
+            )
+
+            recovery_result = (
+                await self.recovery_engine
+                .recover(
+                    recovery_rule
+                )
+            )
+
+        except RecoveryError as exc:
+            logger.log(
+                "recovery_failed",
+                step_id=step.id,
+                recovery_code=(
+                    recovery_rule.code
+                ),
+                reason=str(exc),
+            )
+
+            return await self._failure(
+                artifact,
+                code="RECOVERY_FAILED",
+                message=str(exc),
+                step_id=step.id,
+            )
+
+        logger.log(
+            "recovery_succeeded",
+            step_id=step.id,
+            recovery_code=(
+                recovery_result.code
+            ),
+            resume_mode=(
+                recovery_result.resume_mode
+            ),
+        )
+
+        if (
+            recovery_result.resume_mode
+            == "reverify_current_checkpoint"
+        ):
+            checkpoint_ok = (
+                await self._verify_checkpoint(
+                    step.checkpoint,
+                    ctx.inputs,
+                    frame=step.frame,
+                )
+            )
+
+            if not checkpoint_ok:
+                return await self._failure(
+                    artifact,
+                    code=(
+                        "RECOVERY_CHECKPOINT_FAILED"
+                    ),
+                    message=(
+                        "Recovery succeeded, but "
+                        "the interrupted step's "
+                        "checkpoint was not satisfied."
+                    ),
+                    step_id=step.id,
+                )
+
+            logger.log(
+                "recovery_checkpoint_passed",
+                step_id=step.id,
+                recovery_code=(
+                    recovery_rule.code
+                ),
+            )
+
+            logger.log(
+                "checkpoint_passed",
+                step_id=step.id,
+            )
+
+            ctx.completed_conditions.add(
+                f"step:{step.id}"
+            )
+
+            if self._success_condition_met(
+                artifact,
+                ctx.completed_conditions,
+            ):
+                return await self._build_success_result(
+                    artifact=artifact,
+                    step_id=step.id,
+                )
+
+            return None
+
+        if (
+            recovery_result.resume_mode
+            == "retry_current_step"
+        ):
+            return await self._retry_step(
+                artifact=artifact,
+                step=step,
+                ctx=ctx,
+                resolved_value=resolved_value,
+            )
+
+        return await self._failure(
+            artifact,
+            code=(
+                "UNSUPPORTED_RECOVERY_RESUME"
+            ),
+            message=(
+                "Recovery returned unsupported "
+                "resume mode: "
+                f"{recovery_result.resume_mode}"
+            ),
+            step_id=step.id,
+        )
+
+    async def _result_for_outcome(
+        self,
+        artifact: CapabilityArtifact,
+        outcome: ExpectedOutcome,
+        step_id: str,
+        inputs: dict[str, Any],
+    ) -> RunResult:
+        logger = self._require_logger()
+
+        if (
+            outcome.classification
+            == OutcomeClass.BUSINESS_OUTCOME
+        ):
+            logger.log(
+                "business_outcome",
+                step_id=step_id,
+                outcome_code=outcome.code,
+            )
+
+            return RunResult(
+                status=RunStatus.BUSINESS_OUTCOME,
+                capability_id=(
+                    artifact.capability.id
+                ),
+                capability_version=(
+                    artifact.capability.version
+                ),
+                outcome_code=outcome.code,
+                outputs=(
+                    self._resolve_return_values(
+                        outcome.returns,
+                        inputs,
+                    )
+                ),
+            )
+
+        if (
+            outcome.classification
+            == OutcomeClass.HARD_FAILURE
+        ):
+            return await self._failure(
+                artifact,
+                code=outcome.code,
+                message=(
+                    "A declared hard-failure "
+                    "outcome was detected."
+                ),
+                step_id=step_id,
+            )
+
+        return await self._failure(
+            artifact,
+            code=outcome.code,
+            message=(
+                "A recoverable outcome was detected, "
+                "but no recovery rule handled it."
+            ),
+            step_id=step_id,
         )
 
     async def _attempt_handoff(
@@ -810,9 +869,8 @@ class ReplayEngine:
         self,
         artifact: CapabilityArtifact,
         step: Step,
-        inputs: dict[str, Any],
+        ctx: RunContext,
         resolved_value: Any | None,
-        completed_conditions: set[str],
     ) -> RunResult | None:
         if self.logger is not None:
             self.logger.log(
@@ -821,12 +879,10 @@ class ReplayEngine:
             )
 
         try:
-            output = (
-                await self._execute_step(
-                    step,
-                    inputs,
-                    resolved_value,
-                )
+            await self._execute_step(
+                step,
+                ctx.inputs,
+                resolved_value,
             )
 
             self._log_locator_resolution(
@@ -852,74 +908,17 @@ class ReplayEngine:
         )
 
         if outcome is not None:
-            if (
-                outcome.classification
-                == OutcomeClass.BUSINESS_OUTCOME
-            ):
-                if self.logger is not None:
-                    self.logger.log(
-                        "business_outcome",
-                        step_id=step.id,
-                        outcome_code=(
-                            outcome.code
-                        ),
-                    )
-
-                return RunResult(
-                    status=(
-                        RunStatus
-                        .BUSINESS_OUTCOME
-                    ),
-                    capability_id=(
-                        artifact.capability.id
-                    ),
-                    capability_version=(
-                        artifact.capability.version
-                    ),
-                    outcome_code=(
-                        outcome.code
-                    ),
-                    outputs=(
-                        self._resolve_return_values(
-                            outcome.returns,
-                            inputs,
-                        )
-                    ),
-                )
-
-            if (
-                outcome.classification
-                == OutcomeClass.HARD_FAILURE
-            ):
-                return await self._failure(
-                    artifact,
-                    code=outcome.code,
-                    message=(
-                        "A declared hard-failure "
-                        "outcome was detected."
-                    ),
-                    step_id=step.id,
-                )
-
-            if (
-                outcome.classification
-                == OutcomeClass.RECOVERABLE
-            ):
-                return await self._failure(
-                    artifact,
-                    code=outcome.code,
-                    message=(
-                        "A recoverable outcome was "
-                        "detected, but no recovery rule "
-                        "handled it."
-                    ),
-                    step_id=step.id,
-                )
+            return await self._result_for_outcome(
+                artifact=artifact,
+                outcome=outcome,
+                step_id=step.id,
+                inputs=ctx.inputs,
+            )
 
         checkpoint_ok = (
             await self._verify_checkpoint(
                 step.checkpoint,
-                inputs,
+                ctx.inputs,
                 frame=step.frame,
             )
         )
@@ -943,13 +942,13 @@ class ReplayEngine:
                 step_id=step.id,
             )
 
-        completed_conditions.add(
+        ctx.completed_conditions.add(
             f"step:{step.id}"
         )
 
         if self._success_condition_met(
             artifact,
-            completed_conditions,
+            ctx.completed_conditions,
         ):
             return await self._build_success_result(
                 artifact=artifact,
@@ -957,6 +956,16 @@ class ReplayEngine:
             )
 
         return None
+
+    def _require_logger(
+        self,
+    ) -> RunLogger:
+        if self.logger is None:
+            raise RuntimeError(
+                "Replay logger is not initialized."
+            )
+
+        return self.logger
 
     def _log_locator_resolution(
         self,
@@ -1410,7 +1419,6 @@ class ReplayEngine:
             outputs=caller_outputs,
         )
 
-
     async def _extract_outputs(
         self,
         artifact: CapabilityArtifact,
@@ -1451,7 +1459,6 @@ class ReplayEngine:
             )
 
         return outputs
-
 
     def _parse_output(
         self,
@@ -1534,7 +1541,6 @@ class ReplayEngine:
             "parse kind: "
             f"{parse_kind}"
         )
-
 
     def _outputs_for_log(
         self,

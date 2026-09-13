@@ -119,7 +119,7 @@
                     },
                     {
                         "kind": "xpath",
-                        "rank": 2,
+                        "rank": 4,
                         "value": "//input[@type='submit' and @value='Search']"
                     }
                 ],
@@ -213,6 +213,17 @@
         }
     ],
     "expected_outcomes": [
+        {
+            "code": "APPLICATION_ERROR",
+            "classification": "hard_failure",
+            "after_step": "open_member",
+            "precedence": 1,
+            "detector": {
+                "kind": "text_visible",
+                "value": "Application error"
+            },
+            "returns": {}
+        },
         {
             "code": "MEMBER_NOT_FOUND",
             "classification": "business_outcome",

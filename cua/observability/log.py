@@ -10,7 +10,7 @@ class RunLogger:
     def __init__(
         self,
         run_id: str,
-        base_dir: str = "evidence/replay",
+        base_dir: str | Path = "evidence/replay",
     ) -> None:
         self.run_id = run_id
 

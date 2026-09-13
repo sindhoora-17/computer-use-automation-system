@@ -306,6 +306,19 @@
   ],
   "expected_outcomes": [
     {
+      "code": "APPLICATION_ERROR",
+      "classification": "hard_failure",
+      "after_step": "open_member",
+      "precedence": 1,
+      "detector": {
+        "kind": "text_visible",
+        "value": "Application error",
+        "role": null,
+        "column_header": null
+      },
+      "returns": {}
+    },
+    {
       "code": "MEMBER_NOT_FOUND",
       "classification": "business_outcome",
       "after_step": "submit_search",
@@ -358,7 +371,7 @@
   "provenance": {
     "discovered_by": "llm_discovery",
     "discovery_run_id": "discovery_3844502b",
-    "recorded_at": "2026-09-12T23:30:01.993716+00:00",
+    "recorded_at": "2026-09-13T00:47:31.497640+00:00",
     "reviewed_by": null
   }
 }

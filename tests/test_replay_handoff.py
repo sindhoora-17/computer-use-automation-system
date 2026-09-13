@@ -76,6 +76,7 @@ async def test_replay_handoff_resumes_same_session(
         engine = ReplayEngine(
             surface=surface,
             handoff_session=handoff,
+            evidence_dir=tmp_path,
         )
 
         replay_task = (
