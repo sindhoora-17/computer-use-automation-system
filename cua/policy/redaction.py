@@ -15,6 +15,13 @@ class Redactor:
     """
 
     REDACTED = "[REDACTED]"
+    STRUCTURAL_ID_KEYS = {
+    "run_id",
+    "request_id",
+    "discovery_run_id",
+    "capability_id",
+    "step_id",
+    }
 
     _currency_pattern = re.compile(
         r"\$\s?\d[\d,]*\.\d{2}"
@@ -87,8 +94,10 @@ class Redactor:
 
         if isinstance(value, dict):
             return {
-                key: self.redact_value(
+                key: (
                     item
+                    if key in self.STRUCTURAL_ID_KEYS
+                    else self.redact_value(item)
                 )
                 for key, item
                 in value.items()

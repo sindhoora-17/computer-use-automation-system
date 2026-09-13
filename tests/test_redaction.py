@@ -175,3 +175,53 @@ def test_redacts_names_from_table_columns():
         result["elements"][3]["text"]
         == "Active"
     )
+
+def test_preserves_structural_identifiers():
+    redactor = Redactor()
+
+    payload = {
+        "request_id": "handoff_94e61093",
+        "run_id": "replay_12345abc",
+        "discovery_run_id": (
+            "discovery_54321def"
+        ),
+        "capability_id": (
+            "capability_67890"
+        ),
+        "step_id": "step_12345",
+        "member_id": "10001",
+    }
+
+    result = redactor.redact_value(
+        payload
+    )
+
+    assert (
+        result["request_id"]
+        == "handoff_94e61093"
+    )
+
+    assert (
+        result["run_id"]
+        == "replay_12345abc"
+    )
+
+    assert (
+        result["discovery_run_id"]
+        == "discovery_54321def"
+    )
+
+    assert (
+        result["capability_id"]
+        == "capability_67890"
+    )
+
+    assert (
+        result["step_id"]
+        == "step_12345"
+    )
+
+    assert (
+        result["member_id"]
+        == "[REDACTED]"
+    )

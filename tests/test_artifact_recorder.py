@@ -1,5 +1,3 @@
-import json
-
 from cua.artifact.recorder import (
     ArtifactRecorder,
 )
