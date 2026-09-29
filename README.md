@@ -210,8 +210,4 @@ pytest
 
 The tests cover artifact validation, locator harvesting, deterministic replay, policy enforcement, redaction, recovery, output handling, and human handoff.
 
-## Design notes
-
-A more detailed explanation of the artifact model, policy layer, replay behavior, failure handling, and design tradeoffs is available in [REPORT.md](REPORT.md).
-
 All application records in this repository are synthetic and are used only for local testing and demonstrations.
